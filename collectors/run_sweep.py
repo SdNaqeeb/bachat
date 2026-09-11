@@ -18,13 +18,11 @@ CI, see .github/workflows/):
     INGEST_KEY                shared secret required on X-Ingest-Key (matches
                                the Worker's `wrangler secret put INGEST_KEY`)
     FCM_SERVICE_ACCOUNT_JSON  the full service-account key JSON, as a string
-    FCM_DEVICE_TOKEN          the (single) phone's current FCM registration
-                               token. NOTE: worker/schema.sql has a `devices`
-                               table and a POST /api/register-device route,
-                               which is the real source of truth for this --
-                               but no GET route exists yet to read it back,
-                               so this entrypoint uses a static secret for
-                               v1. Flagged in the delivered report.
+    FCM_DEVICE_TOKEN          OPTIONAL fallback only. The real source of
+                               truth is the device the app registered via
+                               POST /api/register-device, read back here with
+                               GET /api/register-device. This env var is used
+                               only when no device is registered yet.
 
 --- Worker API contract this entrypoint depends on ---------------------
 
@@ -35,14 +33,16 @@ Verified directly against worker/src/routes/*.ts and worker/src/lib/*.ts:
                          "quiet_hours": {"start":"23:00","end":"08:00","tz":"Asia/Kolkata"},
                          "location": {"lat":..,"lon":..,"pincode":..},
                          "enabled_categories": ["dairy", "fashion-tops", ...],
-                         ... any other keys, including ones this file owns
-                         ("pending_alerts", "sent_alerts_log") ... } }
+                         ... } }
+        NOTE: `prefs` holds USER settings only. This file no longer stores
+        any of its own state here -- see /api/alerts below.
 
-    POST /api/prefs
-        body: a flat map of key -> value to upsert; any subset of keys.
-        Used both for real user prefs (not by this file) and, pragmatically,
-        as the persistence layer for this file's own alert-queue state (see
-        below) -- there is no dedicated endpoint for that.
+    GET /api/categories[?mode=quick]
+        -> { "categories": [ {"slug": "dairy", "label": "Dairy",
+                               "mode": "quick"}, ... ] }
+        The category catalog. `mode` is a stored column, which is what lets
+        this file map an enabled category slug to quick-vs-fashion as DATA
+        instead of guessing from a "fashion-" name prefix.
 
     POST /api/ingest   [header X-Ingest-Key: <INGEST_KEY>]
         body: { "retailer_id": "blinkit", "captured_at": <epoch MILLIS>,
@@ -53,29 +53,51 @@ Verified directly against worker/src/routes/*.ts and worker/src/lib/*.ts:
         Product ids are NOT returned -- they are deterministic:
         f"{retailer_id}:{offer.ext_id}" (see worker/src/lib/ingest.ts).
 
-    GET /api/history/:productId?days=30
-        -> { "product_id", "days_requested", "days_observed", "series":
-             [{"day","min_price","max_price"}, ...] (oldest first, INCLUDES
-             today's row since ingest already wrote it), "current_price",
-             "current_captured_at", "period_low": {...} }
-        This entrypoint uses only `series`, dropping the last (today's) row
-        to get "prior days" history in the shape collectors.engine expects
-        (ProductSnapshot.trailing_daily_mins excludes today). The worker's
-        own `period_low` field is for the mobile app's UI and is not used
-        here -- the deal engine (collectors/engine) makes its own honest
-        decision from the same raw `series` data.
+    POST /api/history/bulk
+        body: { "product_ids": [...], "days": 30 }
+        -> { "days_requested", "requested", "missing": [...],
+             "items": [ { "product_id", "days_observed", "series":
+                          [{"day","min_price","max_price"}, ...] (oldest
+                          first, INCLUDES today's row since ingest already
+                          wrote it), "current_price", "current_captured_at",
+                          "period_low": {...} }, ... ] }
+        ONE round trip for up to 500 products instead of one GET per
+        product -- at ~400 products per retailer that per-product loop was
+        the single biggest threat to the ~6 minute sweep budget (spec 12).
+        `days_observed` is the REAL row count for each product; the worker
+        never defaults it, and neither does this file.
+        The per-product GET /api/history/:productId still exists (the app
+        uses it for the sparkline) and returns the same numbers.
 
---- Known gap: no /api/alerts route ------------------------------------
+    GET  /api/register-device  [header X-Ingest-Key]
+        -> { "device": {"token", "platform", "registered_at"} | null }
+        `null` is a NORMAL answer: a fresh install has not registered yet.
+        The sweep still runs and still ingests prices; it just cannot push.
 
-worker/schema.sql defines an `alerts` table (the intended dedupe log and,
-presumably, the mobile app's alert-history view) but no route exposes it
-yet. Rather than block on that, this entrypoint persists its OWN dedupe
-log and held-alert queue inside the generic `prefs` KV surface, under the
-keys "sent_alerts_log" and "pending_alerts". This works, but it means the
-real `alerts` table stays empty and any future "alert history" UI reading
-directly from it will see nothing. Recommend the worker add a proper
-POST/GET /api/alerts pair backed by that table; swapping this file over is
-a small, isolated change (see WorkerClient).
+    GET  /api/alerts?since=<epoch ms>&product_id=&kind=&limit=
+        -> { "alerts": [ {"id","product_id","kind","price","sent_at"} ],
+             "count", "since" }
+        The dedupe log, read from the real `alerts` table. The engine
+        dedupes on the (product_id, kind, price) tuple.
+
+    POST /api/alerts  [header X-Ingest-Key]
+        body: { "alerts": [ {product_id, kind, price, sent_at}, ... ] }
+        Records what was actually delivered. Idempotent: a retried POST
+        with the same values does not duplicate the log entry.
+
+    GET  /api/alerts/pending[?due_by=<epoch ms>]
+        -> { "pending": [ {"id","product_id","kind","price",
+                            "scheduled_for","created_at","payload"} ],
+             "count" }
+    POST /api/alerts/pending  [header X-Ingest-Key]
+        body: { "action": "replace", "alerts": [ {product_id, kind, price,
+                 scheduled_for (epoch ms), payload: <full engine Alert>} ] }
+        The quiet-hours hold queue. Spec 7: quiet-hours alerts are HELD and
+        delivered in the morning, never dropped -- and since every sweep is
+        a fresh GitHub Actions process, that queue has to be durable
+        server-side. `payload` round-trips the whole engine Alert so the
+        morning delivery sends the real message, not a reconstruction.
+
 """
 
 from __future__ import annotations
@@ -91,6 +113,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from collectors.engine import (
+    MAX_HISTORY_WINDOW_DAYS,
     Alert,
     ProductSnapshot,
     QuietHours,
@@ -120,10 +143,22 @@ except Exception:  # pragma: no cover - core package still landing
 
 logger = logging.getLogger("bachat.run_sweep")
 
-# How many entries of the dedupe log to keep in the prefs blob. Generous
-# relative to "a handful of alerts per day" (spec section 2) so nothing
-# ages out before its 90-day price history does.
-SENT_LOG_MAX_ENTRIES = 2000
+# How far back to read the alert dedupe log. 90 days matches the `prices`
+# retention window (spec section 5), so a product's dedupe state never
+# outlives the history that produced it.
+DEDUPE_WINDOW_DAYS = 90
+
+# Product ids per POST /api/history/bulk request.
+#
+# The worker accepts 500 per request and internally splits them into
+# set-based SQL chunks of 90 (D1 caps a prepared statement at 100 bound
+# parameters). 200 is chosen here, below that ceiling, so that one HTTP
+# request is a small, bounded unit of Worker CPU (spec section 2: 10 ms per
+# invocation) while still collapsing a 400-product retailer from 400 round
+# trips into 2. Raising it to 500 would work but makes a single slow request
+# cost more to retry; lowering it costs round trips, which is the exact
+# thing this endpoint exists to remove.
+HISTORY_BULK_CHUNK = 200
 
 
 # ---------------------------------------------------------------------------
@@ -181,10 +216,6 @@ class WorkerClient:
         resp.raise_for_status()
         return resp.json().get("prefs", {})
 
-    def set_prefs(self, values: dict[str, Any]) -> None:
-        resp = self._session.post(f"{self.base_url}/api/prefs", json=values, timeout=self.timeout)
-        resp.raise_for_status()
-
     def ingest(self, retailer_id: str, mode: str, offers: list[Any], captured_at_ms: int) -> dict[str, Any]:
         payload_offers = []
         for o in offers:
@@ -201,14 +232,85 @@ class WorkerClient:
         resp.raise_for_status()
         return resp.json()
 
-    def get_history(self, product_id: str, days: int = 30) -> dict[str, Any]:
+    def get_categories(self) -> list[dict[str, Any]]:
+        """The category catalog. Each entry carries its `mode` as data."""
+        resp = self._session.get(f"{self.base_url}/api/categories", timeout=self.timeout)
+        resp.raise_for_status()
+        return resp.json().get("categories", [])
+
+    def get_history_bulk(self, product_ids: list[str], days: int = 30) -> dict[str, dict[str, Any]]:
+        """Trailing daily history for many products, keyed by product id.
+
+        Sends ``HISTORY_BULK_CHUNK`` ids per request. Every returned item
+        carries the REAL ``days_observed`` for that product; nothing here
+        defaults, pads or infers it (spec section 7).
+        """
+        out: dict[str, dict[str, Any]] = {}
+        for i in range(0, len(product_ids), HISTORY_BULK_CHUNK):
+            batch = product_ids[i : i + HISTORY_BULK_CHUNK]
+            resp = self._session.post(
+                f"{self.base_url}/api/history/bulk",
+                json={"product_ids": batch, "days": days},
+                timeout=self.timeout,
+            )
+            resp.raise_for_status()
+            body = resp.json()
+            for item in body.get("items", []):
+                out[item["product_id"]] = item
+            for missing in body.get("missing", []):
+                log("history_bulk_missing_product", level=logging.WARNING, product_id=missing)
+        return out
+
+    def get_device_token(self) -> str | None:
+        """The FCM token the app registered, or None if no device has yet.
+
+        `None` is a normal state (a fresh install), not an error.
+        """
         resp = self._session.get(
-            f"{self.base_url}/api/history/{product_id}",
-            params={"days": days},
+            f"{self.base_url}/api/register-device",
+            headers={"X-Ingest-Key": self.ingest_key},
             timeout=self.timeout,
         )
         resp.raise_for_status()
-        return resp.json()
+        device = resp.json().get("device")
+        if not device:
+            return None
+        token = device.get("token")
+        return token or None
+
+    def get_sent_alerts(self, since_ms: int) -> list[dict[str, Any]]:
+        resp = self._session.get(
+            f"{self.base_url}/api/alerts",
+            params={"since": since_ms},
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+        return resp.json().get("alerts", [])
+
+    def record_sent_alerts(self, records: list[dict[str, Any]]) -> None:
+        if not records:
+            return
+        resp = self._session.post(
+            f"{self.base_url}/api/alerts",
+            json={"alerts": records},
+            headers={"X-Ingest-Key": self.ingest_key},
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+
+    def get_pending_alerts(self) -> list[dict[str, Any]]:
+        resp = self._session.get(f"{self.base_url}/api/alerts/pending", timeout=self.timeout)
+        resp.raise_for_status()
+        return resp.json().get("pending", [])
+
+    def replace_pending_alerts(self, entries: list[dict[str, Any]]) -> None:
+        resp = self._session.post(
+            f"{self.base_url}/api/alerts/pending",
+            json={"action": "replace", "alerts": entries},
+            headers={"X-Ingest-Key": self.ingest_key},
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
 
 
 def product_id_for(retailer_id: str, ext_id: str) -> str:
@@ -221,6 +323,12 @@ def trailing_daily_mins_from_history(history: dict[str, Any]) -> tuple[float, ..
 
     The history endpoint's `series` already includes today's row (ingest
     ran first), so today is always the last entry when present -- drop it.
+
+    The engine treats ``len(trailing_daily_mins)`` as the true count of
+    prior days observed, so this must never pad or truncate: what the
+    worker actually stored is what the engine gets. Works identically for
+    an item from /api/history/bulk and one from /api/history/:productId --
+    both carry the same `series` and the same honest `days_observed`.
     """
     series = history.get("series") or []
     if not series:
@@ -262,20 +370,50 @@ def build_location(raw_prefs: dict[str, Any]) -> Any:
     return Location(lat=loc.get("lat"), lon=loc.get("lon"), pincode=loc.get("pincode"))
 
 
-def categories_for_mode(enabled_categories: frozenset[str], mode: str) -> list[Any]:
+def categories_for_mode(
+    enabled_categories: frozenset[str],
+    mode: str,
+    catalog: list[dict[str, Any]],
+) -> list[Any]:
     """Which of the user's enabled categories apply to this sweep's mode.
 
-    ASSUMPTION (flagged as ambiguous in the design spec): categories are
-    not explicitly tagged with a mode in `prefs.enabled_categories` -- it
-    is a flat list of slugs (see worker/schema.sql seed data, e.g.
-    "dairy", "fashion-tops"). This entrypoint uses the "fashion-" prefix
-    convention from that seed data as the mode signal. If the real prefs
-    shape carries an explicit mode per category, replace this heuristic.
+    A category's mode is DATA: it comes from the worker's `categories`
+    table (GET /api/categories), not from the shape of its slug. An earlier
+    version of this function inferred it from a "fashion-" name prefix,
+    which meant renaming a slug silently changed which sweep collected it.
+
+    A slug the catalog does not know has no mode, so it is skipped and
+    logged. Skipping loudly is the honest behaviour: guessing would sweep
+    it in the wrong mode, and the wrong mode means the wrong retailers.
     """
-    selected = [c for c in sorted(enabled_categories) if (c.startswith("fashion-")) == (mode == "fashion")]
+    mode_by_slug = {
+        str(entry.get("slug")): str(entry.get("mode"))
+        for entry in catalog
+        if entry.get("slug") and entry.get("mode")
+    }
+    label_by_slug = {
+        str(entry.get("slug")): str(entry.get("label") or entry.get("slug")) for entry in catalog
+    }
+
+    selected: list[str] = []
+    for slug in sorted(enabled_categories):
+        known_mode = mode_by_slug.get(slug)
+        if known_mode is None:
+            log(
+                "category_mode_unknown",
+                level=logging.WARNING,
+                category=slug,
+                detail="not in the /api/categories catalog; skipped rather than guessed",
+            )
+            continue
+        if known_mode == mode:
+            selected.append(slug)
+
     if Category is None:
         return selected
-    return [Category(id=c, slug=c, label=c, mode=mode) for c in selected]
+    return [
+        Category(id=c, slug=c, label=label_by_slug.get(c, c), mode=mode) for c in selected
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -342,8 +480,13 @@ def build_snapshot(
 
 
 # ---------------------------------------------------------------------------
-# Alert queue persistence (prefs KV, see module docstring's "known gap")
+# Alert state persistence (the real `alerts` table, via /api/alerts)
 # ---------------------------------------------------------------------------
+#
+# Both the dedupe log and the quiet-hours hold queue live server-side, not
+# in this process: every sweep is a fresh GitHub Actions run, so anything
+# kept in memory is lost between runs, and a held alert that is lost is a
+# dropped alert -- which spec section 7 forbids.
 
 
 def alert_to_dict(alert: Alert) -> dict[str, Any]:
@@ -360,13 +503,37 @@ def alert_from_dict(d: dict[str, Any]) -> Alert:
     return Alert(**d)
 
 
-def load_already_sent(raw_prefs: dict[str, Any]) -> set[tuple[str, str, float]]:
-    log_entries = raw_prefs.get("sent_alerts_log") or []
-    return {(e["product_id"], e["kind"], float(e["price"])) for e in log_entries}
+def load_already_sent(sent_rows: list[dict[str, Any]]) -> set[tuple[str, str, float]]:
+    """The engine's dedupe set, built from the `alerts` table rows."""
+    return {(r["product_id"], r["kind"], float(r["price"])) for r in sent_rows}
 
 
-def load_pending(raw_prefs: dict[str, Any]) -> list[Alert]:
-    return [alert_from_dict(d) for d in (raw_prefs.get("pending_alerts") or [])]
+def load_pending(pending_rows: list[dict[str, Any]]) -> list[Alert]:
+    """Rehydrate held alerts from the queue, skipping any row whose payload
+    no longer decodes rather than crashing the whole sweep over one."""
+    out: list[Alert] = []
+    for row in pending_rows:
+        payload = row.get("payload")
+        if not isinstance(payload, dict):
+            log("pending_alert_unreadable", level=logging.WARNING, id=row.get("id"))
+            continue
+        try:
+            out.append(alert_from_dict(payload))
+        except Exception as exc:  # noqa: BLE001 - one bad row must not lose the rest
+            log("pending_alert_unreadable", level=logging.WARNING, id=row.get("id"), error=str(exc))
+    return out
+
+
+def pending_entry(alert: Alert) -> dict[str, Any]:
+    """One row for POST /api/alerts/pending. `payload` carries the whole
+    Alert so the morning delivery sends the real message."""
+    return {
+        "product_id": alert.product_id,
+        "kind": alert.kind,
+        "price": alert.price,
+        "scheduled_for": int(alert.scheduled_for.timestamp() * 1000),
+        "payload": alert_to_dict(alert),
+    }
 
 
 def build_push_message(alert: Alert, device_token: str) -> PushMessage:
@@ -379,6 +546,31 @@ def build_push_message(alert: Alert, device_token: str) -> PushMessage:
     )
 
 
+def resolve_device_token(worker: WorkerClient) -> tuple[str | None, str]:
+    """The token the app registered, else the static Actions secret.
+
+    Returns (token, source). No registered device is a NORMAL state: a
+    fresh install has not registered yet, and the sweep must still run and
+    ingest prices -- it simply has nobody to push to.
+    """
+    try:
+        token = worker.get_device_token()
+    except Exception as exc:  # noqa: BLE001 - never abort a sweep over push plumbing
+        log("device_token_fetch_failed", level=logging.WARNING, error=str(exc))
+        token = None
+
+    if token:
+        return token, "registered_device"
+
+    env_token = os.environ.get("FCM_DEVICE_TOKEN")
+    if env_token:
+        log("device_token_fallback", detail="no registered device; using FCM_DEVICE_TOKEN")
+        return env_token, "env_fallback"
+
+    log("device_token_absent", detail="no device registered and no FCM_DEVICE_TOKEN; alerts cannot be pushed")
+    return None, "none"
+
+
 def deliver_alerts(
     ready: list[Alert],
     sender: FCMSender | None,
@@ -386,31 +578,42 @@ def deliver_alerts(
     now: datetime,
     dry_run: bool,
 ) -> tuple[int, list[dict[str, Any]]]:
-    """Push every ready alert. Returns (sent_count, newly_sent_log_entries)
-    -- the caller persists the log entries into `sent_alerts_log`.
+    """Push every ready alert. Returns (sent_count, records) -- the caller
+    POSTs the records to /api/alerts so the next sweep dedupes against them.
     """
     sent = 0
-    new_log_entries: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
+    sent_at_ms = int(now.timestamp() * 1000)
     for alert in ready:
         if dry_run or sender is None or not device_token:
             log("alert_dry_run", product_id=alert.product_id, kind=alert.kind, message=alert.message)
             sent += 1
-            new_log_entries.append(
-                {"product_id": alert.product_id, "kind": alert.kind, "price": alert.price, "sent_at": int(now.timestamp())}
+            records.append(
+                {
+                    "product_id": alert.product_id,
+                    "kind": alert.kind,
+                    "price": alert.price,
+                    "sent_at": sent_at_ms,
+                }
             )
             continue
 
         result = sender.send(build_push_message(alert, device_token))
         if result.outcome == SendOutcome.SENT:
             sent += 1
-            new_log_entries.append(
-                {"product_id": alert.product_id, "kind": alert.kind, "price": alert.price, "sent_at": int(now.timestamp())}
+            records.append(
+                {
+                    "product_id": alert.product_id,
+                    "kind": alert.kind,
+                    "price": alert.price,
+                    "sent_at": sent_at_ms,
+                }
             )
         elif result.outcome == SendOutcome.PERMANENT_FAILURE:
             log("push_permanent_failure", level=logging.ERROR, product_id=alert.product_id, detail=result.detail)
         else:
             log("push_transient_failure", level=logging.WARNING, product_id=alert.product_id, detail=result.detail)
-    return sent, new_log_entries
+    return sent, records
 
 
 # ---------------------------------------------------------------------------
@@ -426,10 +629,10 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
     raw_prefs = worker.get_prefs()
     prefs = build_user_prefs(raw_prefs, mode)
     location = build_location(raw_prefs)
-    categories = categories_for_mode(prefs.enabled_categories, mode)
+    categories = categories_for_mode(prefs.enabled_categories, mode, worker.get_categories())
 
     sender: FCMSender | None = None
-    device_token = os.environ.get("FCM_DEVICE_TOKEN")
+    device_token, token_source = resolve_device_token(worker)
     sa_json = os.environ.get("FCM_SERVICE_ACCOUNT_JSON")
     if sa_json and not dry_run:
         sa = ServiceAccount.from_json(sa_json)
@@ -437,7 +640,10 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
         sender = FCMSender(project_id=sa.project_id, token_cache=AccessTokenCache(sa, transport), transport=transport)
 
     results: list[RetailerRunResult] = []
-    all_snapshots: list[ProductSnapshot] = []
+    # (offer, retailer_id) for everything the engine could possibly alert on.
+    # History is fetched for all of them in ONE bulk call after every
+    # retailer has been ingested, not per product inside the loop.
+    evaluable: list[tuple[Any, str]] = []
 
     for retailer_id, adapter in ADAPTERS.items():
         if getattr(adapter, "mode", None) != mode:
@@ -454,44 +660,78 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
                 results.append(result)
                 continue
 
-            # Only fetch history (and thus only evaluate) for offers the
-            # engine could possibly alert on -- everything else was still
-            # ingested (so its price history keeps growing) but skipping
-            # the history round-trip here keeps the sweep inside budget.
-            evaluable = [o for o in offers if o.in_stock and o.category in prefs.enabled_categories]
-            for offer in evaluable:
-                product_id = product_id_for(retailer_id, offer.ext_id)
-                try:
-                    history = worker.get_history(product_id, days=30)
-                except Exception as exc:  # noqa: BLE001 - one product's history miss must not abort the retailer
-                    log("history_fetch_failed", level=logging.WARNING, product_id=product_id, error=str(exc))
-                    continue
-                all_snapshots.append(build_snapshot(offer, retailer_id, mode, history, now))
+            # Only evaluate offers the engine could possibly alert on --
+            # everything else was still ingested (so its price history keeps
+            # growing), it just does not need its history read back.
+            evaluable.extend(
+                (o, retailer_id) for o in offers if o.in_stock and o.category in prefs.enabled_categories
+            )
 
         results.append(result)
 
+    # --- History: ONE bulk call, not one call per product ----------------
+    product_ids = [product_id_for(retailer_id, o.ext_id) for o, retailer_id in evaluable]
+    histories: dict[str, dict[str, Any]] = {}
+    if product_ids:
+        try:
+            histories = worker.get_history_bulk(product_ids, days=MAX_HISTORY_WINDOW_DAYS)
+        except Exception as exc:  # noqa: BLE001 - no history means no period-low claim, not a dead sweep
+            log("history_bulk_failed", level=logging.ERROR, products=len(product_ids), error=str(exc))
+            histories = {}
+
+    all_snapshots: list[ProductSnapshot] = []
+    for offer, retailer_id in evaluable:
+        product_id = product_id_for(retailer_id, offer.ext_id)
+        history = histories.get(product_id)
+        if history is None:
+            # No history row means no substantiated claim. Skipping is the
+            # honest choice: evaluating with an empty series would announce
+            # "lowest in 1 day" for a product we merely failed to read.
+            log("history_missing", level=logging.WARNING, product_id=product_id)
+            continue
+        all_snapshots.append(build_snapshot(offer, retailer_id, mode, history, now))
+
     # --- Engine: pure decision over everything collected this run --------
-    already_sent = load_already_sent(raw_prefs)
-    new_alerts = evaluate_batch(all_snapshots, prefs, already_sent)
-    pending = load_pending(raw_prefs)
+    try:
+        since_ms = captured_at_ms - DEDUPE_WINDOW_DAYS * 86_400_000
+        already_sent = load_already_sent(worker.get_sent_alerts(since_ms))
+    except Exception as exc:  # noqa: BLE001
+        # An empty dedupe set re-notifies things already sent, so this is
+        # the noisy direction of failure and is logged as an error.
+        log("alerts_log_fetch_failed", level=logging.ERROR, error=str(exc))
+        already_sent = set()
+
+    try:
+        pending = load_pending(worker.get_pending_alerts())
+    except Exception as exc:  # noqa: BLE001
+        log("pending_alerts_fetch_failed", level=logging.ERROR, error=str(exc))
+        pending = []
+
+    # Already-held alerts count as "already decided": without this, a
+    # product that triggers during quiet hours and is still triggering on
+    # the next sweep would be queued twice and notify twice in the morning.
+    new_alerts = evaluate_batch(all_snapshots, prefs, already_sent | {a.dedupe_key for a in pending})
 
     combined = pending + new_alerts
     ready = [a for a in combined if a.scheduled_for <= now]
     still_held = [a for a in combined if a.scheduled_for > now]
 
-    sent_count, new_log_entries = deliver_alerts(ready, sender, device_token, now, dry_run)
+    sent_count, sent_records = deliver_alerts(ready, sender, device_token, now, dry_run)
 
-    try:
-        sent_log = (raw_prefs.get("sent_alerts_log") or []) + new_log_entries
-        sent_log = sent_log[-SENT_LOG_MAX_ENTRIES:]
-        worker.set_prefs(
-            {
-                "pending_alerts": [alert_to_dict(a) for a in still_held],
-                "sent_alerts_log": sent_log,
-            }
-        )
-    except Exception as exc:  # noqa: BLE001 - never abort the run over bookkeeping persistence
-        log("alert_state_save_failed", level=logging.WARNING, error=str(exc))
+    if dry_run:
+        log("alert_state_not_persisted", detail="dry run: nothing recorded, nothing dequeued")
+    else:
+        # Record the sends BEFORE rewriting the queue: if the process dies
+        # between the two, the worst case is an alert that stays held one
+        # more sweep, never one that is delivered twice or lost.
+        try:
+            worker.record_sent_alerts(sent_records)
+        except Exception as exc:  # noqa: BLE001 - never abort the run over bookkeeping
+            log("alerts_record_failed", level=logging.ERROR, error=str(exc))
+        try:
+            worker.replace_pending_alerts([pending_entry(a) for a in still_held])
+        except Exception as exc:  # noqa: BLE001 - the queue is durable; the next sweep retries
+            log("pending_alerts_save_failed", level=logging.ERROR, error=str(exc))
 
     alerts_by_retailer: dict[str, int] = {}
     for alert in ready:
@@ -499,14 +739,21 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
     for result in results:
         result.alerts_fired = alerts_by_retailer.get(result.retailer_id, 0)
 
-    print_summary(mode, results, sent_count, len(still_held))
+    print_summary(mode, results, sent_count, len(still_held), token_source)
     return results
 
 
-def print_summary(mode: str, results: list[RetailerRunResult], alerts_sent: int, alerts_held: int) -> None:
+def print_summary(
+    mode: str,
+    results: list[RetailerRunResult],
+    alerts_sent: int,
+    alerts_held: int,
+    token_source: str = "unknown",
+) -> None:
     log(
         "sweep_summary",
         mode=mode,
+        push_token_source=token_source,
         retailers=[
             {
                 "retailer": r.retailer_id,
@@ -527,7 +774,10 @@ def print_summary(mode: str, results: list[RetailerRunResult], alerts_sent: int,
             f"  {r.retailer_id:<12} products={r.products_collected:<5} "
             f"status={status:<8} alerts={r.alerts_fired}" + (f"  ({r.error})" if r.error else "")
         )
-    print(f"  -- {alerts_sent} alert(s) sent, {alerts_held} held for quiet hours --\n")
+    print(
+        f"  -- {alerts_sent} alert(s) sent, {alerts_held} held for quiet hours "
+        f"(push token: {token_source}) --\n"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -25,6 +25,7 @@ export function applySchema(db: D1Shim): void {
 export function resetData(db: D1Shim): void {
   const tables = [
     "alerts",
+    "pending_alerts",
     "matches",
     "basket_items",
     "price_daily",

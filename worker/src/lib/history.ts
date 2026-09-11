@@ -54,3 +54,39 @@ export function computePeriodLow(
     claim,
   };
 }
+
+/** The per-product history payload shared by GET /api/history/:productId and
+ * POST /api/history/bulk. Both routes build their response through this
+ * function, so there is exactly ONE implementation of the honesty rule on the
+ * server: `days_observed` is always the real row count, never the requested
+ * window, never a padded series, never a default. */
+export type ProductHistory = {
+  product_id: string;
+  days_observed: number;
+  series: DailyRow[];
+  current_price: number | null;
+  current_captured_at: number | null;
+  period_low: PeriodLowClaim | null;
+};
+
+export function buildProductHistory(
+  productId: string,
+  series: DailyRow[],
+  latest: { price: number; captured_at: number } | null,
+  windowDays: number,
+): ProductHistory {
+  // Fall back to the newest rollup row only when there is no raw price at
+  // all. If there is neither, current_price stays null and no period-low
+  // claim is made — an absent claim is honest, an invented one is not.
+  const currentPrice =
+    latest?.price ?? (series.length > 0 ? (series[series.length - 1] as DailyRow).min_price : null);
+
+  return {
+    product_id: productId,
+    days_observed: series.length,
+    series,
+    current_price: currentPrice,
+    current_captured_at: latest?.captured_at ?? null,
+    period_low: currentPrice == null ? null : computePeriodLow(series, currentPrice, windowDays),
+  };
+}

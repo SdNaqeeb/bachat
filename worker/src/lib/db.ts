@@ -37,3 +37,11 @@ export async function getFees(env: Env, retailerId: string): Promise<{
 export function placeholders(n: number): string {
   return Array.from({ length: n }, () => "?").join(",");
 }
+
+/** Splits a list into fixed-size chunks. Used to keep any single prepared
+ * statement inside D1's 100-bound-parameter ceiling. */
+export function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}

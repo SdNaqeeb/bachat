@@ -14,6 +14,8 @@ import { facets } from "./routes/facets";
 import { prefs } from "./routes/prefs";
 import { registerDevice } from "./routes/register-device";
 import { ingest } from "./routes/ingest";
+import { alerts } from "./routes/alerts";
+import { categories } from "./routes/categories";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -36,5 +38,7 @@ app.route("/api/facets", facets);
 app.route("/api/prefs", prefs);
 app.route("/api/register-device", registerDevice);
 app.route("/api/ingest", ingest);
+app.route("/api/alerts", alerts);
+app.route("/api/categories", categories);
 
 export default app;

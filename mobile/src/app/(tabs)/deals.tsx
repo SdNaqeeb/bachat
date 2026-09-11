@@ -42,44 +42,49 @@ import { freshnessOf } from '@/lib/format';
 import type { Category, Deal, DealsFeed, Mode, Retailer } from '@/lib/types';
 import { palette, spacing } from '@/theme';
 
-/**
- * Rows per page. The Worker contract takes a `limit` rather than a cursor, so
- * "next page" is a larger limit — fine at this catalog size, and the one place
- * to change if the contract grows a real cursor.
- */
+/** Rows requested per page, via the feed's real cursor. */
 const PAGE_SIZE = 15;
 
 export default function DealsScreen() {
   const { mode, label, accent } = useMode();
   const { prefs } = usePrefs();
 
-  const [feed, setFeed] = useState<DealsFeed | null>(null);
+  // Per mode, so flipping the header switch neither carries a grocery feed
+  // into Fashion nor throws away where you were. Each feed already holds its
+  // own accumulated `deals` and the `nextCursor` for its next page.
+  const [feeds, setFeeds] = useState<Record<Mode, DealsFeed | null>>({
+    quick: null,
+    fashion: null,
+  });
   const [retailers, setRetailers] = useState<Retailer[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  // Per mode, so flipping the header switch neither carries a grocery category
-  // into Fashion nor throws away where you were.
   const [selection, setSelection] = useState<Record<Mode, string | null>>({
     quick: null,
     fashion: null,
   });
-  const [limits, setLimits] = useState<Record<Mode, number>>({
-    quick: PAGE_SIZE,
-    fashion: PAGE_SIZE,
+  // The cursor to fetch next, per mode. `undefined` means "first page".
+  const [cursors, setCursors] = useState<Record<Mode, string | undefined>>({
+    quick: undefined,
+    fashion: undefined,
   });
-  const [exhausted, setExhausted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [scrolled, setScrolled] = useState(false);
 
   const requestMode = useRef<Mode>(mode);
+  // Bumped on every load() call for a given mode so a response that is still
+  // in flight when a newer request for the same mode starts can never land.
+  const requestId = useRef<Record<Mode, number>>({ quick: 0, fashion: 0 });
   const selected = selection[mode];
-  const limit = limits[mode];
+  const feed = feeds[mode];
+  const cursor = cursors[mode];
+  const exhausted = feed !== null && feed.nextCursor == null;
 
   const select = useCallback(
     (categoryId: string | null) => {
       setSelection((previous) => ({ ...previous, [mode]: categoryId }));
-      setLimits((previous) => ({ ...previous, [mode]: PAGE_SIZE }));
+      setCursors((previous) => ({ ...previous, [mode]: undefined }));
     },
     [mode]
   );
@@ -96,16 +101,26 @@ export default function DealsScreen() {
   }, [selected, enabled]);
 
   const load = useCallback(
-    async (target: Mode, nextLimit: number, signal?: AbortSignal) => {
+    async (target: Mode, pageCursor: string | undefined, signal?: AbortSignal) => {
+      const id = ++requestId.current[target];
       const [facets, next] = await Promise.all([
         apiClient.facets(target, signal),
-        apiClient.deals({ mode: target, categories: queryCategories, limit: nextLimit }, signal),
+        apiClient.deals(
+          { mode: target, categories: queryCategories, limit: PAGE_SIZE, cursor: pageCursor },
+          signal
+        ),
       ]);
-      if (requestMode.current !== target) return;
+      // A newer request for this mode (mode switch, category change, refresh,
+      // or another page) started while this one was in flight — drop it.
+      if (requestMode.current !== target || requestId.current[target] !== id) return;
       setRetailers(facets.retailers);
       setCategories(facets.categories);
-      setFeed(next);
-      setExhausted(next.deals.length < nextLimit);
+      setFeeds((previous) => {
+        // No cursor means "first page": start the accumulated list over
+        // rather than appending onto whatever this mode had before.
+        const priorDeals = pageCursor === undefined ? [] : previous[target]?.deals ?? [];
+        return { ...previous, [target]: { ...next, deals: [...priorDeals, ...next.deals] } };
+      });
       setError(null);
     },
     [queryCategories]
@@ -117,7 +132,7 @@ export default function DealsScreen() {
     void (async () => {
       setLoading(true);
       try {
-        await load(mode, limit, controller.signal);
+        await load(mode, cursor, controller.signal);
       } catch (caught: unknown) {
         if (!controller.signal.aborted) setError(caught);
       } finally {
@@ -125,20 +140,22 @@ export default function DealsScreen() {
       }
     })();
     return () => controller.abort();
-  }, [mode, limit, load]);
+  }, [mode, cursor, load]);
 
   const refresh = useCallback(() => {
     setRefreshing(true);
-    setLimits((previous) => ({ ...previous, [mode]: PAGE_SIZE }));
-    load(mode, PAGE_SIZE)
+    setCursors((previous) => ({ ...previous, [mode]: undefined }));
+    load(mode, undefined)
       .catch((caught: unknown) => setError(caught))
       .finally(() => setRefreshing(false));
   }, [mode, load]);
 
-  // Raising the limit re-runs the load effect, which is the whole pagination.
+  // Advancing the cursor re-runs the load effect, which is the whole
+  // pagination: it fetches the next page and the effect's setFeeds appends it.
   const loadMore = useCallback(() => {
-    if (loading || exhausted || feed === null) return;
-    setLimits((previous) => ({ ...previous, [mode]: previous[mode] + PAGE_SIZE }));
+    if (loading || exhausted || feed === null || feed.nextCursor == null) return;
+    const nextCursor = feed.nextCursor;
+    setCursors((previous) => ({ ...previous, [mode]: nextCursor }));
   }, [loading, exhausted, feed, mode]);
 
   const retailerById = useMemo(

@@ -133,6 +133,66 @@ CREATE TABLE IF NOT EXISTS alerts (
 CREATE INDEX IF NOT EXISTS idx_alerts_product_kind_price
   ON alerts(product_id, kind, price);
 
+-- "What has been sent since <timestamp>?" — the sweep's dedupe read and the
+-- app's alert-history view both scan by recency.
+CREATE INDEX IF NOT EXISTS idx_alerts_sent_at ON alerts(sent_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- pending_alerts (quiet-hours hold queue, spec section 7)
+-- ---------------------------------------------------------------------------
+-- Quiet-hours alerts are HELD and delivered in the morning, never dropped.
+-- Each sweep is a fresh GitHub Actions process, so the queue cannot live in
+-- memory: it must be durable between runs. Deliberately NO foreign key on
+-- product_id — a held alert must survive even if the product row is later
+-- rewritten, and losing a held alert is exactly the failure the spec forbids.
+--
+-- `payload` is the full engine Alert as JSON so nothing (message, category,
+-- lowest_in_days) is reconstructed by guesswork on release; the promoted
+-- columns exist only so the queue is queryable and orderable.
+CREATE TABLE IF NOT EXISTS pending_alerts (
+  id            TEXT PRIMARY KEY,
+  product_id    TEXT NOT NULL,
+  kind          TEXT NOT NULL CHECK (kind IN ('threshold', 'period_low')),
+  price         REAL NOT NULL,
+  scheduled_for INTEGER NOT NULL, -- epoch ms; deliver at or after this
+  payload       TEXT NOT NULL,    -- JSON-encoded engine Alert
+  created_at    INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_alerts_scheduled
+  ON pending_alerts(scheduled_for);
+
+-- ---------------------------------------------------------------------------
+-- categories (the sweepable category catalog — mode is DATA, not a prefix)
+-- ---------------------------------------------------------------------------
+-- `prefs.enabled_categories` stays a flat list of slugs (the mobile app
+-- decodes it as a string list), so the quick-vs-fashion split has to come
+-- from somewhere. It used to be inferred from a "fashion-" name prefix in
+-- the collector; that guess is replaced by this table. A category the
+-- catalog does not know has NO mode, and the sweep skips it loudly rather
+-- than guessing one.
+CREATE TABLE IF NOT EXISTS categories (
+  slug  TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  mode  TEXT NOT NULL CHECK (mode IN ('quick', 'fashion'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_mode ON categories(mode);
+
+INSERT OR IGNORE INTO categories (slug, label, mode) VALUES
+  ('staples',             'Staples',           'quick'),
+  ('dairy',               'Dairy',             'quick'),
+  ('snacks',              'Snacks',            'quick'),
+  ('beverages',           'Beverages',         'quick'),
+  ('bakery',              'Bakery',            'quick'),
+  ('fruits-vegetables',   'Fruits & Veg',      'quick'),
+  ('personal-care',       'Personal Care',     'quick'),
+  ('household',           'Household',         'quick'),
+  ('fashion-tops',        'Tops',              'fashion'),
+  ('fashion-bottoms',     'Bottoms',           'fashion'),
+  ('fashion-footwear',    'Footwear',          'fashion'),
+  ('fashion-accessories', 'Accessories',       'fashion');
+
 -- ---------------------------------------------------------------------------
 -- device registration for FCM push (implied by POST /api/register-device)
 -- ---------------------------------------------------------------------------
