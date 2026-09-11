@@ -48,11 +48,11 @@ Blinkit and Amazon; these measured figures supersede them.
 
 | Retailer | Mode | Result | Status |
 | --- | --- | --- | --- |
-| **Blinkit** | quick | `/cn/<slug>/cid/<c>/<s>` → 200, **727 price entries**, exposes `lat`/`lon`/`merchant_id` | ship v1 |
-| **BigBasket** | quick | `/cl/<slug>/` → 200, **350 products** in `__NEXT_DATA__`, `mrp`/`sp`/`brand` | ship v1 |
-| **Myntra** | fashion | `__myx` JSON; filters server-side via `?f=Brand:Nike::size_facet:M` | ship v1 |
-| **Amazon.in** | fashion | `/s?k=` → 200, 72 ASINs with prices, no captcha | ship v1 |
-| **Flipkart** | fashion | 1st request 200 (886 KB), subsequent throttled to 787 b | ship v1, slow pacing |
+| **Blinkit** | quick | `/cn/<slug>/cid/<c>/<s>` → 200; 30 cards/page, 650 via pagination; `lat`/`lon` request headers select the dark store (`merchant_id`) | ship v1 |
+| **BigBasket** | quick | `/listing-svc/v2/products` JSON (needs `X-Caller: UIKIRK`) or `/cl/<slug>/` `__NEXT_DATA__`; 48 products/page, 63 pages | ship v1 |
+| **Myntra** | fashion | `__myx` JSON at `searchData.results.products`; filters server-side via `?f=Brand:Nike::size_facet:M`; 2434 brands / 43 sizes enumerable | ship v1 |
+| **Amazon.in** | fashion | unreliable with a bare UA (503 bot wall); needs `sec-ch-ua` client hints + a warm-up GET + ~8 s pacing, then 48 offers | ship v1 |
+| **Flipkart** | fashion | intermittent wall, not a rate limit (home page blocked while the following search succeeded); fail soft | ship v1, slow pacing |
 | Zepto | quick | 202, zero bytes — AWS WAF | deferred |
 | Swiggy Instamart | quick | session-cookie gated, no simple JSON endpoint | deferred |
 | Ajio | fashion | 403 Akamai, including internal Hybris API | blocked |
@@ -179,8 +179,17 @@ Rules every adapter obeys:
 - **Parse fixtures, not the network, in tests.** Each adapter ships a saved
   HTML/JSON fixture so parser tests run offline and in CI. When a retailer
   changes its markup, one fixture refresh localises the break.
-- **Rate limit per host.** Flipkart throttles after a single request; the shared
-  client enforces a per-retailer delay and exponential backoff.
+- **Rate limit per host.** The shared client enforces a per-retailer delay,
+  exponential backoff, `sec-ch-ua` client hints and a per-host warm-up request.
+  Measured: Amazon at 3 s pacing reliably earns a 503; 8 s holds. Without the
+  client hints the fashion sweep is blocked most of the time.
+- **Detect blocks by positive proof, not by guessing.** Require a content
+  marker (`__myx` / `s-search-result` / `__INITIAL_STATE__`) before declaring a
+  page real, and only then fall back to size heuristics. Naive keyword markers
+  are actively dangerous: `captcha` appears in Myntra's own JS and
+  `humanChallenge` in Flipkart's Redux store, so either would report every
+  successful sweep as blocked. A blocked request must never look like
+  "no products found".
 - **Never raise past the boundary.** A failing adapter logs, returns `[]`, and
   the sweep continues. One broken retailer must not cost the others' data.
 - **No browser automation.** If a retailer needs it, it is deferred, not bolted
@@ -188,12 +197,22 @@ Rules every adapter obeys:
 
 ### Location
 
-Quick-commerce prices are dark-store-specific. Blinkit takes `lat`/`lon` and
-returns a `merchant_id`; BigBasket uses `_bb_pin_code` / `_bb_nhid` cookies.
-Both are stored in `prefs` and injected per request. The exact
-pincode-to-cookie handshake for BigBasket is the one piece of reverse
-engineering still outstanding — the collector task must resolve it and record
-what it finds.
+Quick-commerce prices are dark-store-specific, and this is measured, not
+assumed: the same Blinkit category returns `merchant_id` 31719 from a Gurugram
+IP and 30377 from Bengaluru.
+
+- **Blinkit**: `lat`/`lon` are REQUEST HEADERS, not query params.
+- **BigBasket**: resolved. A four-call unauthenticated handshake
+  (Places autocomplete -> details -> `/ui-svc/v1/serviceable` ->
+  `PUT /member-svc/v2/member/current-delivery-address/` ->
+  `GET /ui-svc/v2/header/?send_door_info=true`) returns an `additional_cookies`
+  object carrying `_bb_pin_code`, `_bb_sa_ids`, `_bb_addressinfo`,
+  `_bb_cda_sa_info`. Verified to move the data: `/cl/beverages/` total_count
+  2978 (IP default) -> 782 (560034) -> 861 (400001).
+  **Setting `_bb_pin_code` by hand is a silent no-op** - the server rewrites it
+  and prices do not move. Always run the handshake.
+  `_bb_nhid` is NOT the location key for a signed-out visitor; `_bb_cid` is,
+  and only as a result of the handshake.
 
 ## 7. Deal engine
 

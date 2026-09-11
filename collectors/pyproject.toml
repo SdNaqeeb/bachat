@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bachat-collectors"
+version = "0.1.0"
+description = "Bachat price collectors: retailer adapters, deal engine, FCM push"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools]
+# The repo root is the import root: modules are `collectors.core.*`,
+# `collectors.adapters.*`, and tests import them that way.
+packages = [
+    "collectors",
+    "collectors.adapters",
+    "collectors.core",
+    "collectors.engine",
+    "collectors.push",
+]
+package-dir = { "collectors" = "." }
+
+[tool.pytest.ini_options]
+# rootdir is this directory, so ".." is the repository root, which is what
+# makes `import collectors.adapters.blinkit` resolve without an install.
+pythonpath = [".."]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

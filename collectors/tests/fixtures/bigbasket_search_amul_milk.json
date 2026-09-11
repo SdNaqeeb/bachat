@@ -1,0 +1,748 @@
+{
+ "tabs": [
+  {
+   "product_info": {
+    "products": [
+     {
+      "id": "306926",
+      "desc": "Taaza Homogenised Toned Milk",
+      "w": "1 L",
+      "magnitude": "1000",
+      "unit": "ml",
+      "pack_desc": "Tetra Pak",
+      "absolute_url": "/pd/306926/amul-homogenised-toned-milk-1-l-carton/",
+      "availability": {
+       "avail_status": "001",
+       "display_mrp": true,
+       "display_sp": true,
+       "not_for_sale": false,
+       "button": "Add",
+       "show_express": false
+      },
+      "pricing": {
+       "discount": {
+        "deal_type": null,
+        "deal_score": 0.17605,
+        "mrp": "77",
+        "mrp_per_pack": null,
+        "d_text": "",
+        "d_avail": "false",
+        "prim_price": {
+         "sp": "77",
+         "rsp": "77",
+         "sp_per_pack": null,
+         "icon": {
+          "base_url": null,
+          "image": null,
+          "format": null
+         },
+         "desc": "",
+         "base_price": "7.7",
+         "base_unit": "100ml"
+        },
+        "sec_price": {
+         "sp": null,
+         "icon": null,
+         "desc": null,
+         "background": null
+        },
+        "subscription_price": "77",
+        "camp_detail": {
+         "c": [],
+         "r_c": [],
+         "d_t": "",
+         "d_v": 0,
+         "v_f": 0,
+         "c_f": 0,
+         "m_f": 0,
+         "on_inv_v_f": 0,
+         "off_inv_v_f": 0,
+         "on_inv_c_f": 0,
+         "off_inv_c_f": 0,
+         "on_inv_m_f": 0,
+         "off_inv_m_f": 0,
+         "narq": 9999999,
+         "dual_pricing": false
+        },
+        "offer_entry_text": "",
+        "offer_available": "false"
+       }
+      },
+      "images": [
+       {
+        "s": "https://www.bbassets.com/media/uploads/p/s/306926_6-amul-homogenised-toned-milk.jpg",
+        "m": "https://www.bbassets.com/media/uploads/p/m/306926_6-amul-homogenised-toned-milk.jpg",
+        "l": "https://www.bbassets.com/media/uploads/p/l/306926_6-amul-homogenised-toned-milk.jpg",
+        "xl": "https://www.bbassets.com/media/uploads/p/xl/306926_6-amul-homogenised-toned-milk.jpg",
+        "xxl": "https://www.bbassets.com/media/uploads/p/xxl/306926_6-amul-homogenised-toned-milk.jpg"
+       }
+      ],
+      "brand": {
+       "name": "Amul",
+       "slug": "amul",
+       "url": "/pb/amul/"
+      },
+      "category": {
+       "tlc_name": "Bakery, Cakes & Dairy",
+       "tlc_slug": "bakery-cakes-dairy",
+       "mlc_name": "Dairy",
+       "mlc_slug": "dairy",
+       "mlc_id": 1399,
+       "llc_name": "Milk",
+       "llc_slug": "type=pc&slug=milk",
+       "llc_id": 590
+      },
+      "sku_max_quantity": 0,
+      "children": [
+       {
+        "id": "70001832",
+        "desc": "Taaza Homogenised Toned Milk",
+        "w": "200 ml",
+        "magnitude": "200",
+        "unit": "ml",
+        "pack_desc": "Tetra Pak",
+        "absolute_url": "/pd/70001832/amul-taaza-fresh-toned-milk-200-ml-carton/",
+        "availability": {
+         "avail_status": "001",
+         "display_mrp": true,
+         "display_sp": true,
+         "not_for_sale": false,
+         "button": "Add",
+         "show_express": false
+        },
+        "pricing": {
+         "discount": {
+          "deal_type": null,
+          "deal_score": 0.17605,
+          "mrp": "17",
+          "mrp_per_pack": null,
+          "d_text": "",
+          "d_avail": "false",
+          "prim_price": {
+           "sp": "17",
+           "rsp": "17",
+           "sp_per_pack": null,
+           "icon": {
+            "base_url": null,
+            "image": null,
+            "format": null
+           },
+           "desc": "",
+           "base_price": "8.5",
+           "base_unit": "100ml"
+          },
+          "sec_price": {
+           "sp": null,
+           "icon": null,
+           "desc": null,
+           "background": null
+          },
+          "subscription_price": "17",
+          "camp_detail": {
+           "c": [],
+           "r_c": [],
+           "d_t": "",
+           "d_v": 0,
+           "v_f": 0,
+           "c_f": 0,
+           "m_f": 0,
+           "on_inv_v_f": 0,
+           "off_inv_v_f": 0,
+           "on_inv_c_f": 0,
+           "off_inv_c_f": 0,
+           "on_inv_m_f": 0,
+           "off_inv_m_f": 0,
+           "narq": 9999999,
+           "dual_pricing": false
+          },
+          "offer_entry_text": "",
+          "offer_available": "false"
+         }
+        },
+        "images": [
+         {
+          "s": "https://www.bbassets.com/media/uploads/p/s/70001832_2-amul-taaza-fresh-toned-milk.jpg",
+          "m": "https://www.bbassets.com/media/uploads/p/m/70001832_2-amul-taaza-fresh-toned-milk.jpg",
+          "l": "https://www.bbassets.com/media/uploads/p/l/70001832_2-amul-taaza-fresh-toned-milk.jpg",
+          "xl": "https://www.bbassets.com/media/uploads/p/xl/70001832_2-amul-taaza-fresh-toned-milk.jpg",
+          "xxl": "https://www.bbassets.com/media/uploads/p/xxl/70001832_2-amul-taaza-fresh-toned-milk.jpg"
+         }
+        ],
+        "brand": {
+         "name": "Amul",
+         "slug": "amul",
+         "url": "/pb/amul/"
+        },
+        "category": {
+         "tlc_name": "Bakery, Cakes & Dairy",
+         "tlc_slug": "bakery-cakes-dairy",
+         "mlc_name": "Dairy",
+         "mlc_slug": "dairy",
+         "mlc_id": 1399,
+         "llc_name": "Milk",
+         "llc_slug": "type=pc&slug=milk",
+         "llc_id": 590
+        },
+        "sku_max_quantity": 0
+       },
+       {
+        "id": "40041431",
+        "desc": "Taaza Homogenised Toned Milk",
+        "w": "500 ml",
+        "magnitude": "500",
+        "unit": "ml",
+        "pack_desc": "Tetra Pak",
+        "absolute_url": "/pd/40041431/amul-taaza-fresh-toned-milk-500-ml-carton/",
+        "availability": {
+         "avail_status": "001",
+         "display_mrp": true,
+         "display_sp": true,
+         "not_for_sale": false,
+         "button": "Add",
+         "show_express": false
+        },
+        "pricing": {
+         "discount": {
+          "deal_type": null,
+          "deal_score": 0.17605,
+          "mrp": "40",
+          "mrp_per_pack": null,
+          "d_text": "",
+          "d_avail": "false",
+          "prim_price": {
+           "sp": "40",
+           "rsp": "40",
+           "sp_per_pack": null,
+           "icon": {
+            "base_url": null,
+            "image": null,
+            "format": null
+           },
+           "desc": "",
+           "base_price": "8",
+           "base_unit": "100ml"
+          },
+          "sec_price": {
+           "sp": null,
+           "icon": null,
+           "desc": null,
+           "background": null
+          },
+          "subscription_price": "40",
+          "camp_detail": {
+           "c": [],
+           "r_c": [],
+           "d_t": "",
+           "d_v": 0,
+           "v_f": 0,
+           "c_f": 0,
+           "m_f": 0,
+           "on_inv_v_f": 0,
+           "off_inv_v_f": 0,
+           "on_inv_c_f": 0,
+           "off_inv_c_f": 0,
+           "on_inv_m_f": 0,
+           "off_inv_m_f": 0,
+           "narq": 9999999,
+           "dual_pricing": false
+          },
+          "offer_entry_text": "",
+          "offer_available": "false"
+         }
+        },
+        "images": [
+         {
+          "s": "https://www.bbassets.com/media/uploads/p/s/40041431_1-amul-taaza-fresh-toned-milk.jpg",
+          "m": "https://www.bbassets.com/media/uploads/p/m/40041431_1-amul-taaza-fresh-toned-milk.jpg",
+          "l": "https://www.bbassets.com/media/uploads/p/l/40041431_1-amul-taaza-fresh-toned-milk.jpg",
+          "xl": "https://www.bbassets.com/media/uploads/p/xl/40041431_1-amul-taaza-fresh-toned-milk.jpg",
+          "xxl": "https://www.bbassets.com/media/uploads/p/xxl/40041431_1-amul-taaza-fresh-toned-milk.jpg"
+         }
+        ],
+        "brand": {
+         "name": "Amul",
+         "slug": "amul",
+         "url": "/pb/amul/"
+        },
+        "category": {
+         "tlc_name": "Bakery, Cakes & Dairy",
+         "tlc_slug": "bakery-cakes-dairy",
+         "mlc_name": "Dairy",
+         "mlc_slug": "dairy",
+         "mlc_id": 1399,
+         "llc_name": "Milk",
+         "llc_slug": "type=pc&slug=milk",
+         "llc_id": 590
+        },
+        "sku_max_quantity": 0
+       }
+      ]
+     },
+     {
+      "id": "40090894",
+      "desc": "Taaza Milk",
+      "w": "500 ml",
+      "magnitude": "500",
+      "unit": "ml",
+      "pack_desc": "",
+      "absolute_url": "/pd/40090894/amul-taaza-500-ml-pouch/",
+      "availability": {
+       "avail_status": "001",
+       "display_mrp": true,
+       "display_sp": true,
+       "not_for_sale": false,
+       "button": "Add",
+       "show_express": false
+      },
+      "pricing": {
+       "discount": {
+        "deal_type": null,
+        "deal_score": 0.10747,
+        "mrp": "29",
+        "mrp_per_pack": null,
+        "d_text": "",
+        "d_avail": "false",
+        "prim_price": {
+         "sp": "29",
+         "rsp": "29",
+         "sp_per_pack": null,
+         "icon": {
+          "base_url": null,
+          "image": null,
+          "format": null
+         },
+         "desc": "",
+         "base_price": "5.8",
+         "base_unit": "100ml"
+        },
+        "sec_price": {
+         "sp": null,
+         "icon": null,
+         "desc": null,
+         "background": null
+        },
+        "subscription_price": "29",
+        "camp_detail": {
+         "c": [],
+         "r_c": [],
+         "d_t": "",
+         "d_v": 0,
+         "v_f": 0,
+         "c_f": 0,
+         "m_f": 0,
+         "on_inv_v_f": 0,
+         "off_inv_v_f": 0,
+         "on_inv_c_f": 0,
+         "off_inv_c_f": 0,
+         "on_inv_m_f": 0,
+         "off_inv_m_f": 0,
+         "narq": 9999999,
+         "dual_pricing": false
+        },
+        "offer_entry_text": "",
+        "offer_available": "false"
+       }
+      },
+      "images": [
+       {
+        "s": "https://www.bbassets.com/media/uploads/p/s/40090894_9-amul-taaza.jpg",
+        "m": "https://www.bbassets.com/media/uploads/p/m/40090894_9-amul-taaza.jpg",
+        "l": "https://www.bbassets.com/media/uploads/p/l/40090894_9-amul-taaza.jpg",
+        "xl": "https://www.bbassets.com/media/uploads/p/xl/40090894_9-amul-taaza.jpg",
+        "xxl": "https://www.bbassets.com/media/uploads/p/xxl/40090894_9-amul-taaza.jpg"
+       }
+      ],
+      "brand": {
+       "name": "Amul",
+       "slug": "amul",
+       "url": "/pb/amul/"
+      },
+      "category": {
+       "tlc_name": "Bakery, Cakes & Dairy",
+       "tlc_slug": "bakery-cakes-dairy",
+       "mlc_name": "Dairy",
+       "mlc_slug": "dairy",
+       "mlc_id": 1399,
+       "llc_name": "Fresh Milk",
+       "llc_slug": "type=pc&slug=fresh-milk",
+       "llc_id": 1913
+      },
+      "sku_max_quantity": 0,
+      "children": []
+     },
+     {
+      "id": "40005033",
+      "desc": "Moti Homogenised Toned Milk",
+      "w": "450 ml",
+      "magnitude": "450",
+      "unit": "ml",
+      "pack_desc": "Pouch",
+      "absolute_url": "/pd/40005033/amul-moti-homogenised-toned-milk-450-ml-pouch/",
+      "availability": {
+       "avail_status": "001",
+       "display_mrp": true,
+       "display_sp": true,
+       "not_for_sale": false,
+       "button": "Add",
+       "show_express": false
+      },
+      "pricing": {
+       "discount": {
+        "deal_type": null,
+        "deal_score": 0.17605,
+        "mrp": "30",
+        "mrp_per_pack": null,
+        "d_text": "",
+        "d_avail": "false",
+        "prim_price": {
+         "sp": "30",
+         "rsp": "30",
+         "sp_per_pack": null,
+         "icon": {
+          "base_url": null,
+          "image": null,
+          "format": null
+         },
+         "desc": "",
+         "base_price": "6.66",
+         "base_unit": "100ml"
+        },
+        "sec_price": {
+         "sp": null,
+         "icon": null,
+         "desc": null,
+         "background": null
+        },
+        "subscription_price": "30",
+        "camp_detail": {
+         "c": [],
+         "r_c": [],
+         "d_t": "",
+         "d_v": 0,
+         "v_f": 0,
+         "c_f": 0,
+         "m_f": 0,
+         "on_inv_v_f": 0,
+         "off_inv_v_f": 0,
+         "on_inv_c_f": 0,
+         "off_inv_c_f": 0,
+         "on_inv_m_f": 0,
+         "off_inv_m_f": 0,
+         "narq": 9999999,
+         "dual_pricing": false
+        },
+        "offer_entry_text": "",
+        "offer_available": "false"
+       }
+      },
+      "images": [
+       {
+        "s": "https://www.bbassets.com/media/uploads/p/s/40005033_3-amul-moti-homogenised-toned-milk.jpg",
+        "m": "https://www.bbassets.com/media/uploads/p/m/40005033_3-amul-moti-homogenised-toned-milk.jpg",
+        "l": "https://www.bbassets.com/media/uploads/p/l/40005033_3-amul-moti-homogenised-toned-milk.jpg",
+        "xl": "https://www.bbassets.com/media/uploads/p/xl/40005033_3-amul-moti-homogenised-toned-milk.jpg",
+        "xxl": "https://www.bbassets.com/media/uploads/p/xxl/40005033_3-amul-moti-homogenised-toned-milk.jpg"
+       }
+      ],
+      "brand": {
+       "name": "Amul",
+       "slug": "amul",
+       "url": "/pb/amul/"
+      },
+      "category": {
+       "tlc_name": "Bakery, Cakes & Dairy",
+       "tlc_slug": "bakery-cakes-dairy",
+       "mlc_name": "Dairy",
+       "mlc_slug": "dairy",
+       "mlc_id": 1399,
+       "llc_name": "Milk",
+       "llc_slug": "type=pc&slug=milk",
+       "llc_id": 590
+      },
+      "sku_max_quantity": 0,
+      "children": []
+     },
+     {
+      "id": "104707",
+      "desc": "Gold Homogenised Standardised Milk",
+      "w": "1 L",
+      "magnitude": "1",
+      "unit": "L",
+      "pack_desc": "Tetra Pak",
+      "absolute_url": "/pd/104707/amul-homogenised-standardised-milk-1-l-carton/",
+      "availability": {
+       "avail_status": "001",
+       "display_mrp": true,
+       "display_sp": true,
+       "not_for_sale": false,
+       "button": "Add",
+       "show_express": false
+      },
+      "pricing": {
+       "discount": {
+        "deal_type": null,
+        "deal_score": 0.17605,
+        "mrp": "83",
+        "mrp_per_pack": null,
+        "d_text": "",
+        "d_avail": "false",
+        "prim_price": {
+         "sp": "83",
+         "rsp": "83",
+         "sp_per_pack": null,
+         "icon": {
+          "base_url": null,
+          "image": null,
+          "format": null
+         },
+         "desc": "",
+         "base_price": "8.3",
+         "base_unit": "100ml"
+        },
+        "sec_price": {
+         "sp": null,
+         "icon": null,
+         "desc": null,
+         "background": null
+        },
+        "subscription_price": "83",
+        "camp_detail": {
+         "c": [],
+         "r_c": [],
+         "d_t": "",
+         "d_v": 0,
+         "v_f": 0,
+         "c_f": 0,
+         "m_f": 0,
+         "on_inv_v_f": 0,
+         "off_inv_v_f": 0,
+         "on_inv_c_f": 0,
+         "off_inv_c_f": 0,
+         "on_inv_m_f": 0,
+         "off_inv_m_f": 0,
+         "narq": 9999999,
+         "dual_pricing": false
+        },
+        "offer_entry_text": "",
+        "offer_available": "false"
+       }
+      },
+      "images": [
+       {
+        "s": "https://www.bbassets.com/media/uploads/p/s/104707_10-amul-homogenised-standardised-milk.jpg",
+        "m": "https://www.bbassets.com/media/uploads/p/m/104707_10-amul-homogenised-standardised-milk.jpg",
+        "l": "https://www.bbassets.com/media/uploads/p/l/104707_10-amul-homogenised-standardised-milk.jpg",
+        "xl": "https://www.bbassets.com/media/uploads/p/xl/104707_10-amul-homogenised-standardised-milk.jpg",
+        "xxl": "https://www.bbassets.com/media/uploads/p/xxl/104707_10-amul-homogenised-standardised-milk.jpg"
+       }
+      ],
+      "brand": {
+       "name": "Amul",
+       "slug": "amul",
+       "url": "/pb/amul/"
+      },
+      "category": {
+       "tlc_name": "Bakery, Cakes & Dairy",
+       "tlc_slug": "bakery-cakes-dairy",
+       "mlc_name": "Dairy",
+       "mlc_slug": "dairy",
+       "mlc_id": 1399,
+       "llc_name": "Milk",
+       "llc_slug": "type=pc&slug=milk",
+       "llc_id": 590
+      },
+      "sku_max_quantity": 0,
+      "children": [
+       {
+        "id": "40012985",
+        "desc": "Gold Homogenised Standardised Milk",
+        "w": "500 ml",
+        "magnitude": "500",
+        "unit": "ml",
+        "pack_desc": "Tetra Pak",
+        "absolute_url": "/pd/40012985/amul-homogenized-milk-500-ml-carton/",
+        "availability": {
+         "avail_status": "001",
+         "display_mrp": true,
+         "display_sp": true,
+         "not_for_sale": false,
+         "button": "Add",
+         "show_express": false
+        },
+        "pricing": {
+         "discount": {
+          "deal_type": null,
+          "deal_score": null,
+          "mrp": "43",
+          "mrp_per_pack": null,
+          "d_text": "",
+          "d_avail": "false",
+          "prim_price": {
+           "sp": "43",
+           "rsp": "43",
+           "sp_per_pack": null,
+           "icon": {
+            "base_url": null,
+            "image": null,
+            "format": null
+           },
+           "desc": "",
+           "base_price": "8.6",
+           "base_unit": "100ml"
+          },
+          "sec_price": {
+           "sp": null,
+           "icon": null,
+           "desc": null,
+           "background": null
+          },
+          "subscription_price": "43",
+          "camp_detail": {
+           "c": [],
+           "r_c": [],
+           "d_t": "",
+           "d_v": 0,
+           "v_f": 0,
+           "c_f": 0,
+           "m_f": 0,
+           "on_inv_v_f": 0,
+           "off_inv_v_f": 0,
+           "on_inv_c_f": 0,
+           "off_inv_c_f": 0,
+           "on_inv_m_f": 0,
+           "off_inv_m_f": 0,
+           "narq": 9999999,
+           "dual_pricing": false
+          },
+          "offer_entry_text": "",
+          "offer_available": "false"
+         }
+        },
+        "images": [
+         {
+          "s": "https://www.bbassets.com/media/uploads/p/s/40012985_3-amul-homogenized-milk.jpg",
+          "m": "https://www.bbassets.com/media/uploads/p/m/40012985_3-amul-homogenized-milk.jpg",
+          "l": "https://www.bbassets.com/media/uploads/p/l/40012985_3-amul-homogenized-milk.jpg",
+          "xl": "https://www.bbassets.com/media/uploads/p/xl/40012985_3-amul-homogenized-milk.jpg",
+          "xxl": "https://www.bbassets.com/media/uploads/p/xxl/40012985_3-amul-homogenized-milk.jpg"
+         }
+        ],
+        "brand": {
+         "name": "Amul",
+         "slug": "amul",
+         "url": "/pb/amul/"
+        },
+        "category": {
+         "tlc_name": "Bakery, Cakes & Dairy",
+         "tlc_slug": "bakery-cakes-dairy",
+         "mlc_name": "Dairy",
+         "mlc_slug": "dairy",
+         "mlc_id": 1399,
+         "llc_name": "Milk",
+         "llc_slug": "type=pc&slug=milk",
+         "llc_id": 590
+        },
+        "sku_max_quantity": 0
+       }
+      ]
+     },
+     {
+      "id": "40012988",
+      "desc": "Slim 'n' Trim Skimmed Milk",
+      "w": "1 L",
+      "magnitude": "1000",
+      "unit": "ml",
+      "pack_desc": "Tetra Pak",
+      "absolute_url": "/pd/40012988/amul-slim-n-trim-skimmed-milk-1-l-tetra-pouch/",
+      "availability": {
+       "avail_status": "001",
+       "display_mrp": true,
+       "display_sp": true,
+       "not_for_sale": false,
+       "button": "Add",
+       "show_express": false
+      },
+      "pricing": {
+       "discount": {
+        "deal_type": null,
+        "deal_score": 0.17605,
+        "mrp": "85",
+        "mrp_per_pack": null,
+        "d_text": "",
+        "d_avail": "false",
+        "prim_price": {
+         "sp": "85",
+         "rsp": "85",
+         "sp_per_pack": null,
+         "icon": {
+          "base_url": null,
+          "image": null,
+          "format": null
+         },
+         "desc": "",
+         "base_price": "8.5",
+         "base_unit": "100ml"
+        },
+        "sec_price": {
+         "sp": null,
+         "icon": null,
+         "desc": null,
+         "background": null
+        },
+        "subscription_price": "85",
+        "camp_detail": {
+         "c": [],
+         "r_c": [],
+         "d_t": "",
+         "d_v": 0,
+         "v_f": 0,
+         "c_f": 0,
+         "m_f": 0,
+         "on_inv_v_f": 0,
+         "off_inv_v_f": 0,
+         "on_inv_c_f": 0,
+         "off_inv_c_f": 0,
+         "on_inv_m_f": 0,
+         "off_inv_m_f": 0,
+         "narq": 9999999,
+         "dual_pricing": false
+        },
+        "offer_entry_text": "",
+        "offer_available": "false"
+       }
+      },
+      "images": [
+       {
+        "s": "https://www.bbassets.com/media/uploads/p/s/40012988_5-amul-slim-n-trim-skimmed-milk.jpg",
+        "m": "https://www.bbassets.com/media/uploads/p/m/40012988_5-amul-slim-n-trim-skimmed-milk.jpg",
+        "l": "https://www.bbassets.com/media/uploads/p/l/40012988_5-amul-slim-n-trim-skimmed-milk.jpg",
+        "xl": "https://www.bbassets.com/media/uploads/p/xl/40012988_5-amul-slim-n-trim-skimmed-milk.jpg",
+        "xxl": "https://www.bbassets.com/media/uploads/p/xxl/40012988_5-amul-slim-n-trim-skimmed-milk.jpg"
+       }
+      ],
+      "brand": {
+       "name": "Amul",
+       "slug": "amul",
+       "url": "/pb/amul/"
+      },
+      "category": {
+       "tlc_name": "Bakery, Cakes & Dairy",
+       "tlc_slug": "bakery-cakes-dairy",
+       "mlc_name": "Dairy",
+       "mlc_slug": "dairy",
+       "mlc_id": 1399,
+       "llc_name": "Milk",
+       "llc_slug": "type=pc&slug=milk",
+       "llc_id": 590
+      },
+      "sku_max_quantity": 0,
+      "children": []
+     }
+    ],
+    "page": 1,
+    "number_of_pages": 2,
+    "total_count": 27
+   }
+  }
+ ]
+}

@@ -1,0 +1,39 @@
+{
+  "mode": "fashion",
+  "category": null,
+  "retailers": [
+    {
+      "id": "amazon",
+      "name": "Amazon.in",
+      "mode": "fashion",
+      "deeplink_tpl": "https://www.amazon.in/dp/{ext_id}?tag=bachat"
+    },
+    {
+      "id": "flipkart",
+      "name": "Flipkart",
+      "mode": "fashion",
+      "deeplink_tpl": "https://www.flipkart.com/p/{ext_id}?affid=bachat"
+    },
+    {
+      "id": "myntra",
+      "name": "Myntra",
+      "mode": "fashion",
+      "deeplink_tpl": "myntra://product/{ext_id}?utm_source=bachat"
+    }
+  ],
+  "categories": [
+    {
+      "id": "tshirts",
+      "mode": "fashion",
+      "product_count": 2
+    }
+  ],
+  "brands": [
+    "Levis",
+    "Nike"
+  ],
+  "sizes": [
+    "L",
+    "M"
+  ]
+}

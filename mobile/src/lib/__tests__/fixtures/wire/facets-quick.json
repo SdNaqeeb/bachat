@@ -1,0 +1,41 @@
+{
+  "mode": "quick",
+  "category": null,
+  "retailers": [
+    {
+      "id": "bigbasket",
+      "name": "BigBasket",
+      "mode": "quick",
+      "deeplink_tpl": "bigbasket://product/{ext_id}?utm_source=bachat"
+    },
+    {
+      "id": "blinkit",
+      "name": "Blinkit",
+      "mode": "quick",
+      "deeplink_tpl": "blinkit://product/{ext_id}?utm_source=bachat"
+    },
+    {
+      "id": "instamart",
+      "name": "Instamart",
+      "mode": "quick",
+      "deeplink_tpl": "instamart://p/{ext_id}"
+    }
+  ],
+  "categories": [
+    {
+      "id": "bakery",
+      "mode": "quick",
+      "product_count": 2
+    },
+    {
+      "id": "dairy",
+      "mode": "quick",
+      "product_count": 3
+    }
+  ],
+  "brands": [
+    "Amul",
+    "Britannia"
+  ],
+  "sizes": []
+}

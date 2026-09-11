@@ -1,0 +1,37 @@
+name: Fashion sweep
+
+# 2x/day, offset off the hour (spec section 12). :43 keeps this clear of
+# sweep-quick.yml's :17 schedule.
+on:
+  schedule:
+    - cron: "43 5,17 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: sweep-fashion
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    # Budgeted at ~8 min/run (spec section 12); Flipkart's slow pacing
+    # (spec section 3) is the main driver of this job's runtime.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r collectors/requirements.txt
+
+      - name: Run fashion sweep
+        env:
+          WORKER_BASE_URL: ${{ secrets.WORKER_BASE_URL }}
+          INGEST_KEY: ${{ secrets.INGEST_KEY }}
+          FCM_SERVICE_ACCOUNT_JSON: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON }}
+          FCM_DEVICE_TOKEN: ${{ secrets.FCM_DEVICE_TOKEN }}
+        run: python -m collectors.run_sweep --mode fashion

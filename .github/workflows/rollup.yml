@@ -1,0 +1,42 @@
+name: Daily rollup and prune
+
+# 1x/day (spec section 12). price_daily itself is written live by every
+# ingest (see worker/src/lib/ingest.ts), so the only maintenance job left
+# is pruning the append-only `prices` table back to its 90-day retention
+# window (spec section 5) -- price_daily is never pruned since the 30-day
+# low query and the honesty rule both read only that small table.
+on:
+  schedule:
+    - cron: "51 2 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: rollup
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: worker/package-lock.json
+
+      - name: Install worker dependencies
+        run: npm ci
+
+      - name: Prune prices older than 90 days
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler d1 execute bachat --remote \
+            --command "DELETE FROM prices WHERE captured_at < (CAST(strftime('%s','now') AS INTEGER) - 90*86400) * 1000;"

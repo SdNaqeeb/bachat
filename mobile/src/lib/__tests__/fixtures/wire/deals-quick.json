@@ -1,0 +1,127 @@
+{
+  "mode": "quick",
+  "items": [
+    {
+      "product_id": "instamart:milk",
+      "retailer_id": "instamart",
+      "retailer_name": "Instamart",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "mode": "quick",
+      "category": "dairy",
+      "image_url": "https://img.invalid/instamart:milk.jpg",
+      "url": "https://instamart.invalid/p/milk",
+      "price": 24,
+      "mrp": 35,
+      "discount_pct": 0.314,
+      "in_stock": true,
+      "captured_at": 1789059600000,
+      "period_low": {
+        "is_period_low": false,
+        "days_observed": 0,
+        "low_price": 24,
+        "claim": "no price history yet"
+      }
+    },
+    {
+      "product_id": "blinkit:milk",
+      "retailer_id": "blinkit",
+      "retailer_name": "Blinkit",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "mode": "quick",
+      "category": "dairy",
+      "image_url": "https://img.invalid/blinkit:milk.jpg",
+      "url": "https://blinkit.invalid/p/milk",
+      "price": 28,
+      "mrp": 35,
+      "discount_pct": 0.2,
+      "in_stock": true,
+      "captured_at": 1789196400000,
+      "period_low": {
+        "is_period_low": true,
+        "days_observed": 12,
+        "low_price": 28,
+        "claim": "lowest in 12 days"
+      }
+    },
+    {
+      "product_id": "bigbasket:bread",
+      "retailer_id": "bigbasket",
+      "retailer_name": "BigBasket",
+      "name": "Britannia Brown Bread",
+      "brand": "Britannia",
+      "size": null,
+      "pack": "400 g",
+      "mode": "quick",
+      "category": "bakery",
+      "image_url": "https://img.invalid/bigbasket:bread.jpg",
+      "url": "https://bigbasket.invalid/p/bread",
+      "price": 44,
+      "mrp": 55,
+      "discount_pct": 0.2,
+      "in_stock": true,
+      "captured_at": 1789192800000,
+      "period_low": {
+        "is_period_low": false,
+        "days_observed": 0,
+        "low_price": 44,
+        "claim": "no price history yet"
+      }
+    },
+    {
+      "product_id": "blinkit:bread",
+      "retailer_id": "blinkit",
+      "retailer_name": "Blinkit",
+      "name": "Britannia Brown Bread",
+      "brand": "Britannia",
+      "size": null,
+      "pack": "400 g",
+      "mode": "quick",
+      "category": "bakery",
+      "image_url": "https://img.invalid/blinkit:bread.jpg",
+      "url": "https://blinkit.invalid/p/bread",
+      "price": 45,
+      "mrp": 55,
+      "discount_pct": 0.182,
+      "in_stock": true,
+      "captured_at": 1789196400000,
+      "period_low": {
+        "is_period_low": false,
+        "days_observed": 0,
+        "low_price": 45,
+        "claim": "no price history yet"
+      }
+    },
+    {
+      "product_id": "bigbasket:milk",
+      "retailer_id": "bigbasket",
+      "retailer_name": "BigBasket",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "mode": "quick",
+      "category": "dairy",
+      "image_url": "https://img.invalid/bigbasket:milk.jpg",
+      "url": "https://bigbasket.invalid/p/milk",
+      "price": 30,
+      "mrp": 35,
+      "discount_pct": 0.143,
+      "in_stock": true,
+      "captured_at": 1789192800000,
+      "period_low": {
+        "is_period_low": false,
+        "days_observed": 30,
+        "low_price": 22,
+        "claim": "not a period low (last 30 days)"
+      }
+    }
+  ],
+  "swept_at": 1789196400000,
+  "next_cursor": null
+}

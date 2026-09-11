@@ -1,0 +1,61 @@
+{
+  "query": "Amul",
+  "mode": "quick",
+  "results": [
+    {
+      "product_id": "instamart:milk",
+      "retailer_id": "instamart",
+      "retailer_name": "Instamart",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "category": "dairy",
+      "image_url": "https://img.invalid/instamart:milk.jpg",
+      "mode": "quick",
+      "price": 24,
+      "mrp": 35,
+      "in_stock": true,
+      "captured_at": 1789059600000,
+      "url": "https://instamart.invalid/p/milk",
+      "deeplink": "instamart://p/milk"
+    },
+    {
+      "product_id": "blinkit:milk",
+      "retailer_id": "blinkit",
+      "retailer_name": "Blinkit",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "category": "dairy",
+      "image_url": "https://img.invalid/blinkit:milk.jpg",
+      "mode": "quick",
+      "price": 28,
+      "mrp": 35,
+      "in_stock": true,
+      "captured_at": 1789196400000,
+      "url": "https://blinkit.invalid/p/milk",
+      "deeplink": "blinkit://product/milk?utm_source=bachat"
+    },
+    {
+      "product_id": "bigbasket:milk",
+      "retailer_id": "bigbasket",
+      "retailer_name": "BigBasket",
+      "name": "Amul Taaza Toned Milk",
+      "brand": "Amul",
+      "size": null,
+      "pack": "500 ml",
+      "category": "dairy",
+      "image_url": "https://img.invalid/bigbasket:milk.jpg",
+      "mode": "quick",
+      "price": 30,
+      "mrp": 35,
+      "in_stock": true,
+      "captured_at": 1789192800000,
+      "url": "https://bigbasket.invalid/p/milk",
+      "deeplink": "bigbasket://product/milk?utm_source=bachat"
+    }
+  ],
+  "swept_at": 1789196400000
+}

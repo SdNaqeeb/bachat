@@ -1,0 +1,8 @@
+{
+  "//": "The collectors package imports as `collectors.*`, so the REPO ROOT is the import root, not collectors/. pytest gets this from pythonpath=[\"..\"] in collectors/pyproject.toml; this file tells the editor and CI the same thing.",
+  "include": ["collectors"],
+  "exclude": ["**/node_modules", "**/__pycache__", "mobile", "worker"],
+  "extraPaths": ["."],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "standard"
+}

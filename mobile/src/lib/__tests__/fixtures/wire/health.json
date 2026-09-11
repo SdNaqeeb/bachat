@@ -1,0 +1,76 @@
+{
+  "status": "degraded",
+  "retailers": [
+    {
+      "id": "amazon",
+      "name": "Amazon.in",
+      "mode": "fashion",
+      "last_sweep_at": 1789185600000,
+      "age_seconds": 18000,
+      "stale": false,
+      "product_count": 1
+    },
+    {
+      "id": "bigbasket",
+      "name": "BigBasket",
+      "mode": "quick",
+      "last_sweep_at": 1789192800000,
+      "age_seconds": 10800,
+      "stale": false,
+      "product_count": 2
+    },
+    {
+      "id": "blinkit",
+      "name": "Blinkit",
+      "mode": "quick",
+      "last_sweep_at": 1789196400000,
+      "age_seconds": 7200,
+      "stale": false,
+      "product_count": 2
+    },
+    {
+      "id": "flipkart",
+      "name": "Flipkart",
+      "mode": "fashion",
+      "last_sweep_at": null,
+      "age_seconds": null,
+      "stale": true,
+      "product_count": 0
+    },
+    {
+      "id": "instamart",
+      "name": "Instamart",
+      "mode": "quick",
+      "last_sweep_at": 1789059600000,
+      "age_seconds": 144000,
+      "stale": true,
+      "product_count": 1
+    },
+    {
+      "id": "myntra",
+      "name": "Myntra",
+      "mode": "fashion",
+      "last_sweep_at": 1789185600000,
+      "age_seconds": 18000,
+      "stale": false,
+      "product_count": 1
+    }
+  ],
+  "modes": {
+    "quick": {
+      "last_sweep_at": 1789196400000,
+      "stale": false,
+      "retailer_count": 3
+    },
+    "fashion": {
+      "last_sweep_at": 1789185600000,
+      "stale": false,
+      "retailer_count": 3
+    }
+  },
+  "stale_sweep": true,
+  "product_count": 7,
+  "retailer_count": 6,
+  "last_push_sent_at": 1789182000000,
+  "now": 1789203600000
+}

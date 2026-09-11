@@ -1,0 +1,14 @@
+name = "bachat-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-08"
+compatibility_flags = ["nodejs_compat"]
+
+# Free plan: no [observability] paid features enabled.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bachat"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Secrets (set with `wrangler secret put`, never committed):
+#   INGEST_KEY  - shared secret required on X-Ingest-Key for POST /api/ingest

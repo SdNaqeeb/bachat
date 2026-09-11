@@ -1,0 +1,18 @@
+{
+ "places_info": {
+  "lat": 12.9261382,
+  "lng": 77.62210910000002,
+  "streetNumber": "80",
+  "route": "100 Feet Road",
+  "subLocality": "S.T. Bed",
+  "area": "S.T. Bed, Koramangala",
+  "formattedAddress": "80, 100 Feet Rd, 4th Block, S.T. Bed, Cauvery Colony, Koramangala, Bengaluru, Karnataka 560034, India",
+  "googleLocationType": "ROOFTOP",
+  "locTitle": "S.T. Bed",
+  "locDesc": "S.T. Bed, Koramangala, Bengaluru, Karnataka, 560034",
+  "neighborhood": "4th Block",
+  "city": "Bengaluru",
+  "state": "Karnataka",
+  "pincode": "560034"
+ }
+}

@@ -1,0 +1,43 @@
+{
+  "query": "Tee",
+  "mode": "fashion",
+  "results": [
+    {
+      "product_id": "amazon:tee",
+      "retailer_id": "amazon",
+      "retailer_name": "Amazon.in",
+      "name": "Levis Cotton Tee",
+      "brand": "Levis",
+      "size": "L",
+      "pack": null,
+      "category": "tshirts",
+      "image_url": "https://img.invalid/amazon:tee.jpg",
+      "mode": "fashion",
+      "price": 899,
+      "mrp": 1999,
+      "in_stock": false,
+      "captured_at": 1789185600000,
+      "url": "https://amazon.invalid/p/tee",
+      "deeplink": "https://www.amazon.in/dp/tee?tag=bachat"
+    },
+    {
+      "product_id": "myntra:tee",
+      "retailer_id": "myntra",
+      "retailer_name": "Myntra",
+      "name": "Nike Dri-FIT Tee",
+      "brand": "Nike",
+      "size": "M",
+      "pack": null,
+      "category": "tshirts",
+      "image_url": "https://img.invalid/myntra:tee.jpg",
+      "mode": "fashion",
+      "price": 1499,
+      "mrp": 2999,
+      "in_stock": true,
+      "captured_at": 1789185600000,
+      "url": "https://myntra.invalid/p/tee",
+      "deeplink": "myntra://product/tee?utm_source=bachat"
+    }
+  ],
+  "swept_at": 1789185600000
+}

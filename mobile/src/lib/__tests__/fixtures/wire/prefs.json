@@ -1,0 +1,47 @@
+{
+  "prefs": {
+    "threshold_pct": 0.6,
+    "quiet_hours": {
+      "start": "23:00",
+      "end": "08:00",
+      "tz": "Asia/Kolkata"
+    },
+    "location": {
+      "lat": null,
+      "lon": null,
+      "pincode": null
+    },
+    "fees.blinkit": {
+      "delivery": 20,
+      "handling": 5,
+      "eta_minutes": 15
+    },
+    "fees.bigbasket": {
+      "delivery": 40,
+      "handling": 0,
+      "eta_minutes": 120
+    },
+    "fees.myntra": {
+      "delivery": 0,
+      "handling": 0,
+      "eta_minutes": null
+    },
+    "fees.amazon": {
+      "delivery": 0,
+      "handling": 0,
+      "eta_minutes": null
+    },
+    "fees.flipkart": {
+      "delivery": 40,
+      "handling": 0,
+      "eta_minutes": null
+    },
+    "enabled_categories": [
+      "staples",
+      "dairy",
+      "snacks",
+      "fashion-tops",
+      "fashion-bottoms"
+    ]
+  }
+}

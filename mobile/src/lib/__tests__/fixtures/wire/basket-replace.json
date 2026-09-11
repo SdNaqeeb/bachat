@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "mode": "quick",
+  "items": [
+    {
+      "basket_item_id": "i-milk",
+      "label": "Amul Taaza 500 ml",
+      "qty": 3,
+      "mode": "quick",
+      "category": "dairy"
+    },
+    {
+      "basket_item_id": "<uuid>",
+      "label": "Eggs (6)",
+      "qty": 1,
+      "mode": "quick",
+      "category": "dairy"
+    }
+  ]
+}

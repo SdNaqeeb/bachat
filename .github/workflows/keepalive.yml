@@ -1,0 +1,34 @@
+name: Keepalive
+
+# GitHub auto-disables scheduled workflows after 60 days without any commit
+# activity on the repo (spec section 12/15). This makes one trivial commit
+# a week so the sweep/rollup schedules never silently go dark. Runs
+# Sundays; the exact minute is offset off the hour for the same reason as
+# the sweep jobs.
+on:
+  schedule:
+    - cron: "9 3 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Touch keepalive marker
+        run: |
+          mkdir -p .github/keepalive
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive/last-ping.txt
+
+      - name: Commit if changed
+        run: |
+          git config user.name "bachat-keepalive[bot]"
+          git config user.email "actions@github.com"
+          git add .github/keepalive/last-ping.txt
+          git diff --cached --quiet || git commit -m "chore: weekly keepalive ping"
+          git push

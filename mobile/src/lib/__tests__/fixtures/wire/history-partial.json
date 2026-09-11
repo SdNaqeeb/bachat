@@ -1,0 +1,75 @@
+{
+  "product_id": "blinkit:milk",
+  "days_requested": 30,
+  "days_observed": 12,
+  "series": [
+    {
+      "day": "2026-09-01",
+      "min_price": 31,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-02",
+      "min_price": 30,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-03",
+      "min_price": 34,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-04",
+      "min_price": 33,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-05",
+      "min_price": 32,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-06",
+      "min_price": 31,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-07",
+      "min_price": 30,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-08",
+      "min_price": 34,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-09",
+      "min_price": 33,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-10",
+      "min_price": 32,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-11",
+      "min_price": 31,
+      "max_price": 35
+    },
+    {
+      "day": "2026-09-12",
+      "min_price": 28,
+      "max_price": 35
+    }
+  ],
+  "current_price": 28,
+  "current_captured_at": 1789196400000,
+  "period_low": {
+    "is_period_low": true,
+    "days_observed": 12,
+    "low_price": 28,
+    "claim": "lowest in 12 days"
+  }
+}

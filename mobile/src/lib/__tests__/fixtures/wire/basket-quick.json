@@ -1,0 +1,281 @@
+{
+  "mode": "quick",
+  "items": [
+    {
+      "basket_item_id": "i-milk",
+      "label": "Amul Taaza 500 ml",
+      "qty": 2,
+      "category": "dairy"
+    },
+    {
+      "basket_item_id": "i-bread",
+      "label": "Brown Bread",
+      "qty": 1,
+      "category": "bakery"
+    }
+  ],
+  "retailers": [
+    {
+      "retailer_id": "instamart",
+      "retailer_name": "Instamart",
+      "lines": [
+        {
+          "status": "priced",
+          "basket_item_id": "i-milk",
+          "product_id": "instamart:milk",
+          "retailer_id": "instamart",
+          "name": "Amul Taaza Toned Milk",
+          "brand": "Amul",
+          "size": null,
+          "pack": "500 ml",
+          "image_url": "https://img.invalid/instamart:milk.jpg",
+          "url": "https://instamart.invalid/p/milk",
+          "category": "dairy",
+          "mode": "quick",
+          "deeplink": "instamart://p/milk",
+          "price": 24,
+          "mrp": 35,
+          "in_stock": true,
+          "captured_at": 1789059600000
+        },
+        {
+          "status": "missing",
+          "basket_item_id": "i-bread"
+        }
+      ],
+      "items_matched": 1,
+      "items_total": 2,
+      "fully_stocked": false,
+      "missing_items": [
+        {
+          "basket_item_id": "i-bread",
+          "label": "Brown Bread"
+        }
+      ],
+      "subtotal": 48,
+      "delivery_fee": 0,
+      "handling_fee": 0,
+      "eta_minutes": null,
+      "basket_total": 48
+    },
+    {
+      "retailer_id": "blinkit",
+      "retailer_name": "Blinkit",
+      "lines": [
+        {
+          "status": "priced",
+          "basket_item_id": "i-milk",
+          "product_id": "blinkit:milk",
+          "retailer_id": "blinkit",
+          "name": "Amul Taaza Toned Milk",
+          "brand": "Amul",
+          "size": null,
+          "pack": "500 ml",
+          "image_url": "https://img.invalid/blinkit:milk.jpg",
+          "url": "https://blinkit.invalid/p/milk",
+          "category": "dairy",
+          "mode": "quick",
+          "deeplink": "blinkit://product/milk?utm_source=bachat",
+          "price": 28,
+          "mrp": 35,
+          "in_stock": true,
+          "captured_at": 1789196400000
+        },
+        {
+          "status": "priced",
+          "basket_item_id": "i-bread",
+          "product_id": "blinkit:bread",
+          "retailer_id": "blinkit",
+          "name": "Britannia Brown Bread",
+          "brand": "Britannia",
+          "size": null,
+          "pack": "400 g",
+          "image_url": "https://img.invalid/blinkit:bread.jpg",
+          "url": "https://blinkit.invalid/p/bread",
+          "category": "bakery",
+          "mode": "quick",
+          "deeplink": "blinkit://product/bread?utm_source=bachat",
+          "price": 45,
+          "mrp": 55,
+          "in_stock": true,
+          "captured_at": 1789196400000
+        }
+      ],
+      "items_matched": 2,
+      "items_total": 2,
+      "fully_stocked": true,
+      "missing_items": [],
+      "subtotal": 101,
+      "delivery_fee": 25,
+      "handling_fee": 0,
+      "eta_minutes": 15,
+      "basket_total": 126
+    },
+    {
+      "retailer_id": "bigbasket",
+      "retailer_name": "BigBasket",
+      "lines": [
+        {
+          "status": "priced",
+          "basket_item_id": "i-milk",
+          "product_id": "bigbasket:milk",
+          "retailer_id": "bigbasket",
+          "name": "Amul Taaza Toned Milk",
+          "brand": "Amul",
+          "size": null,
+          "pack": "500 ml",
+          "image_url": "https://img.invalid/bigbasket:milk.jpg",
+          "url": "https://bigbasket.invalid/p/milk",
+          "category": "dairy",
+          "mode": "quick",
+          "deeplink": "bigbasket://product/milk?utm_source=bachat",
+          "price": 30,
+          "mrp": 35,
+          "in_stock": true,
+          "captured_at": 1789192800000
+        },
+        {
+          "status": "priced",
+          "basket_item_id": "i-bread",
+          "product_id": "bigbasket:bread",
+          "retailer_id": "bigbasket",
+          "name": "Britannia Brown Bread",
+          "brand": "Britannia",
+          "size": null,
+          "pack": "400 g",
+          "image_url": "https://img.invalid/bigbasket:bread.jpg",
+          "url": "https://bigbasket.invalid/p/bread",
+          "category": "bakery",
+          "mode": "quick",
+          "deeplink": "bigbasket://product/bread?utm_source=bachat",
+          "price": 44,
+          "mrp": 55,
+          "in_stock": true,
+          "captured_at": 1789192800000
+        }
+      ],
+      "items_matched": 2,
+      "items_total": 2,
+      "fully_stocked": true,
+      "missing_items": [],
+      "subtotal": 104,
+      "delivery_fee": 40,
+      "handling_fee": 0,
+      "eta_minutes": 120,
+      "basket_total": 144
+    }
+  ],
+  "ranking": {
+    "winner": {
+      "retailer_id": "blinkit",
+      "retailer_name": "Blinkit",
+      "lines": [
+        {
+          "status": "priced",
+          "basket_item_id": "i-milk",
+          "product_id": "blinkit:milk",
+          "retailer_id": "blinkit",
+          "name": "Amul Taaza Toned Milk",
+          "brand": "Amul",
+          "size": null,
+          "pack": "500 ml",
+          "image_url": "https://img.invalid/blinkit:milk.jpg",
+          "url": "https://blinkit.invalid/p/milk",
+          "category": "dairy",
+          "mode": "quick",
+          "deeplink": "blinkit://product/milk?utm_source=bachat",
+          "price": 28,
+          "mrp": 35,
+          "in_stock": true,
+          "captured_at": 1789196400000
+        },
+        {
+          "status": "priced",
+          "basket_item_id": "i-bread",
+          "product_id": "blinkit:bread",
+          "retailer_id": "blinkit",
+          "name": "Britannia Brown Bread",
+          "brand": "Britannia",
+          "size": null,
+          "pack": "400 g",
+          "image_url": "https://img.invalid/blinkit:bread.jpg",
+          "url": "https://blinkit.invalid/p/bread",
+          "category": "bakery",
+          "mode": "quick",
+          "deeplink": "blinkit://product/bread?utm_source=bachat",
+          "price": 45,
+          "mrp": 55,
+          "in_stock": true,
+          "captured_at": 1789196400000
+        }
+      ],
+      "items_matched": 2,
+      "items_total": 2,
+      "fully_stocked": true,
+      "missing_items": [],
+      "subtotal": 101,
+      "delivery_fee": 25,
+      "handling_fee": 0,
+      "eta_minutes": 15,
+      "basket_total": 126
+    },
+    "runner_up": {
+      "retailer_id": "bigbasket",
+      "retailer_name": "BigBasket",
+      "lines": [
+        {
+          "status": "priced",
+          "basket_item_id": "i-milk",
+          "product_id": "bigbasket:milk",
+          "retailer_id": "bigbasket",
+          "name": "Amul Taaza Toned Milk",
+          "brand": "Amul",
+          "size": null,
+          "pack": "500 ml",
+          "image_url": "https://img.invalid/bigbasket:milk.jpg",
+          "url": "https://bigbasket.invalid/p/milk",
+          "category": "dairy",
+          "mode": "quick",
+          "deeplink": "bigbasket://product/milk?utm_source=bachat",
+          "price": 30,
+          "mrp": 35,
+          "in_stock": true,
+          "captured_at": 1789192800000
+        },
+        {
+          "status": "priced",
+          "basket_item_id": "i-bread",
+          "product_id": "bigbasket:bread",
+          "retailer_id": "bigbasket",
+          "name": "Britannia Brown Bread",
+          "brand": "Britannia",
+          "size": null,
+          "pack": "400 g",
+          "image_url": "https://img.invalid/bigbasket:bread.jpg",
+          "url": "https://bigbasket.invalid/p/bread",
+          "category": "bakery",
+          "mode": "quick",
+          "deeplink": "bigbasket://product/bread?utm_source=bachat",
+          "price": 44,
+          "mrp": 55,
+          "in_stock": true,
+          "captured_at": 1789192800000
+        }
+      ],
+      "items_matched": 2,
+      "items_total": 2,
+      "fully_stocked": true,
+      "missing_items": [],
+      "subtotal": 104,
+      "delivery_fee": 40,
+      "handling_fee": 0,
+      "eta_minutes": 120,
+      "basket_total": 144
+    },
+    "winner_saving": 18,
+    "eligible_for_win": [
+      "blinkit",
+      "bigbasket"
+    ]
+  }
+}

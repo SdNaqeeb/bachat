@@ -1,0 +1,14 @@
+{
+  "product_id": "blinkit:bread",
+  "days_requested": 30,
+  "days_observed": 0,
+  "series": [],
+  "current_price": 45,
+  "current_captured_at": 1789196400000,
+  "period_low": {
+    "is_period_low": false,
+    "days_observed": 0,
+    "low_price": 45,
+    "claim": "no price history yet"
+  }
+}

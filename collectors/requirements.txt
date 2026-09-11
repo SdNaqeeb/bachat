@@ -1,0 +1,8 @@
+# Runtime dependencies for collectors/ (adapters, engine, push, run_sweep).
+requests>=2.32
+selectolax>=0.3
+PyJWT>=2.9
+cryptography>=42
+
+# Test dependencies (installed in CI too, so `pytest` works out of the box).
+pytest>=8.0
