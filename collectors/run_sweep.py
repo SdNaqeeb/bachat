@@ -459,6 +459,20 @@ class RetailerRunResult:
     alerts_fired: int = 0
 
 
+def build_adapter(entry: Any) -> Any:
+    """Normalise an ``ADAPTERS`` entry to a usable adapter instance.
+
+    The registry stores classes, so importing it costs no HttpClient and no
+    per-retailer session for modes this run will skip. The sweep needs
+    *instances*: ``SomeAdapter.sweep(category, loc)`` on the class is an
+    unbound call that silently binds ``self=category`` and then fails with
+    ``missing 1 required positional argument: 'loc'``. An entry that is
+    already an instance passes through, so the registry stays free to hold a
+    pre-configured adapter.
+    """
+    return entry() if isinstance(entry, type) else entry
+
+
 def sweep_retailer(adapter: Any, categories: list[Any], location: Any) -> tuple[list[Any], RetailerRunResult]:
     """Collect offers for one retailer across all its enabled categories.
 
@@ -674,8 +688,17 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
     # retailer has been ingested, not per product inside the loop.
     evaluable: list[tuple[Any, str]] = []
 
-    for retailer_id, adapter in ADAPTERS.items():
-        if getattr(adapter, "mode", None) != mode:
+    for retailer_id, entry in ADAPTERS.items():
+        if getattr(entry, "mode", None) != mode:
+            continue
+
+        try:
+            adapter = build_adapter(entry)
+        except Exception as exc:  # noqa: BLE001 - a broken ctor is one retailer's problem
+            log("adapter_init_failed", level=logging.ERROR, retailer=retailer_id, error=str(exc))
+            results.append(
+                RetailerRunResult(retailer_id=retailer_id, error=f"{type(exc).__name__}: {exc}")
+            )
             continue
 
         offers, result = sweep_retailer(adapter, categories, location)

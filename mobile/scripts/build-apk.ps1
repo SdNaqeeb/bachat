@@ -77,13 +77,20 @@ Write-Host '--- apksigner verify --print-certs ---'
 $verifyOutput | ForEach-Object { Write-Host $_ }
 Write-Host '---------------------------------------'
 
+# Flatten to ONE string before matching. `2>&1` makes $verifyOutput an array,
+# and on an array `-match`/`-notmatch` are FILTERS returning the matching
+# elements, not booleans -- so `if ($verifyOutput -notmatch 'CN=Bachat')` was
+# true for any output containing at least one line without that substring
+# (every digest line), and rejected correctly signed APKs every time.
+$verifyText = ($verifyOutput | Out-String)
+
 if ($verifyExit -ne 0) {
   throw "apksigner could not verify the signature on $out (exit code $verifyExit). The APK is not safely installable."
 }
-if ($verifyOutput -match 'CN=Android Debug') {
+if ($verifyText -match 'CN=Android Debug') {
   throw "REFUSING TO SHIP: $out is signed with the Android DEBUG key, not the Bachat release key. This build cannot update an existing Bachat install. Check that scripts/apply-signing.ps1 ran and found the BACHAT_UPLOAD_* properties -- see its output above the Gradle build."
 }
-if ($verifyOutput -notmatch 'CN=Bachat') {
+if ($verifyText -notmatch 'CN=Bachat') {
   throw "REFUSING TO SHIP: $out was not signed with the expected Bachat release certificate (no 'CN=Bachat' in apksigner output above). Verify credentials\keystore.env.json matches credentials\bachat-release.keystore."
 }
 

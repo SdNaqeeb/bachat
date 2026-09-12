@@ -124,26 +124,32 @@ D1, and send notifications. This is what runs while your phone is asleep.
 
 2. Add these secrets — **Settings → Secrets and variables → Actions**:
 
+   The names must match **exactly** — GitHub hands a workflow an empty string
+   for a secret that does not exist, so a typo here looks like a working
+   config right up until the sweep fails.
+
    | Secret | Value |
    | --- | --- |
-   | `WORKER_URL` | the URL from Phase 1.6 |
+   | `WORKER_BASE_URL` | the URL from Phase 1.6, scheme included, e.g. `https://bachat-worker.<acct>.workers.dev` |
    | `INGEST_KEY` | the same string you set in Phase 1.5 |
-   | `FCM_PROJECT_ID` | Firebase project ID from Phase 2.5 |
-   | `FCM_SERVICE_ACCOUNT` | the **entire contents** of the JSON file from Phase 2.4 |
-   | `BACHAT_PINCODE` | your delivery pincode, e.g. `560034` |
-   | `BACHAT_LAT` / `BACHAT_LON` | your coordinates — right-click your location in Google Maps to copy them |
+   | `FCM_SERVICE_ACCOUNT_JSON` | the **entire contents** of the JSON file from Phase 2.4 |
+   | `FCM_DEVICE_TOKEN` | *optional.* A fallback used only until the app registers a device in Phase 5; leave it unset. |
 
-   The lat/lon matter more than you would think: quick-commerce prices are
-   set per dark store, and the same Blinkit category returns a different store
-   and different prices from Gurugram than from Bengaluru.
+   Your **location is not a secret** — you set it in the app during Phase 5 and
+   it lives in the Worker's prefs, which the sweep reads at startup. That
+   matters more than you would think: quick-commerce prices are set per dark
+   store, so the same Blinkit category returns a different store and different
+   prices from Gurugram than from Bengaluru. A sweep run before you finish
+   onboarding has no location to work with.
 
 3. Trigger a first run by hand rather than waiting for the schedule:
-   **Actions → "Sweep (quick commerce)" → Run workflow.**
+   **Actions → "Quick-commerce sweep" → Run workflow.**
 
 4. Watch the log. Expect a per-retailer summary at the end. Some retailers
    failing is normal and by design — one blocked retailer must never cost you
-   the others' data. If *every* retailer fails, check `WORKER_URL` and
-   `INGEST_KEY` first.
+   the others' data. If *every* retailer fails, check `WORKER_BASE_URL` and
+   `INGEST_KEY` first. A run that stops before any retailer summary and says
+   `sweep_misconfigured` is naming a secret it could not read.
 
 5. Confirm the prices landed:
 

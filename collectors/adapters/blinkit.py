@@ -206,12 +206,99 @@ class BlinkitAdapter(BaseAdapter):
             return {}
         return {"lat": f"{loc.lat}", "lon": f"{loc.lon}"}
 
-    def category_url(self, category: Category) -> str:
-        return f"{BASE}/cn/{category.id.strip('/')}"
+    #: Generic catalog slug -> Blinkit ``<slug>/cid/<l0>/<l1>`` paths.
+    #: Sourced from https://blinkit.com/sitemaps/categories.xml (the only
+    #: listing of these ids Blinkit publishes; the homepage renders its
+    #: category rail client-side). Re-run that sitemap if a category 404s.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {
+        "bakery": (
+            "bread-pav/cid/14/953",
+            "cakes-rolls/cid/888/108",
+            "cookies/cid/888/28",
+            "cream-biscuits/cid/888/105",
+            "rusks-wafers/cid/888/107",
+        ),
+        "beverages": (
+            "soft-drinks/cid/332/1102",
+            "fruit-juice/cid/332/955",
+            "pure-juices/cid/332/1318",
+            "energy-drinks/cid/332/91",
+            "tea/cid/12/957",
+            "coffee/cid/12/1322",
+        ),
+        "dairy": (
+            "milk/cid/14/922",
+            "curd-yogurt/cid/14/123",
+            "butter-more/cid/14/952",
+            "cheese/cid/14/2253",
+            "paneer-tofu/cid/14/923",
+            "eggs/cid/14/1200",
+        ),
+        "fruits-vegetables": (
+            "fresh-vegetables/cid/1487/1489",
+            "fresh-fruits/cid/1487/1503",
+            "exotics/cid/1487/278",
+            "dry-fruits/cid/1557/1160",
+        ),
+        "household": (
+            "detergent-powder-bars/cid/18/983",
+            "floor-surface-cleaners/cid/18/51",
+            "dishwashing-gels-tablets/cid/18/1078",
+            "toilet-bathroom-cleaners/cid/18/987",
+            "fresheners/cid/18/1085",
+            "tissues-disposables/cid/1379/1075",
+        ),
+        "personal-care": (
+            "bathing/cid/163/5841",
+            "hair-care/cid/163/691",
+            "oral-care/cid/163/722",
+            "handwash/cid/163/699",
+            "deodorant-talc/cid/163/1115",
+            "face-body-moisturizers/cid/163/690",
+        ),
+        "snacks": (
+            "chips-crisps/cid/1237/940",
+            "namkeen-snacks/cid/1237/29",
+            "bhujia-mixtures/cid/1237/1178",
+            "nachos/cid/1237/316",
+            "popcorn/cid/1237/156",
+            "sweet-salty/cid/888/144",
+        ),
+        "staples": (
+            "atta/cid/16/1165",
+            "rice/cid/16/1161",
+            "toor-urad-chana/cid/16/1010",
+            "oil/cid/1557/917",
+            "salt-sugar-jaggery/cid/1557/933",
+            "whole-spices/cid/1557/930",
+        ),
+    }
+
+    def category_url(self, cat_id: str) -> str:
+        return f"{BASE}/cn/{cat_id.strip('/')}"
 
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
+        """Sweep every Blinkit category that maps to this catalog slug.
+
+        Deduped across them by ``ext_id``: Blinkit lists the same product
+        under more than one leaf (a Lay's pack is in both chips-crisps and
+        munchies-gift-packs), and one page failing must not cost the rest.
+        """
+        found: dict[str, Offer] = {}
+        for cat_id in self.category_ids(category):
+            try:
+                for offer in self._sweep_one(cat_id, category, loc):
+                    found.setdefault(offer.ext_id, offer)
+            except Exception:  # noqa: BLE001 - one leaf must not cost the others
+                self.log.warning(
+                    "blinkit: category %s failed, keeping %d offers so far",
+                    cat_id, len(found), exc_info=True,
+                )
+        return list(found.values())
+
+    def _sweep_one(self, cat_id: str, category: Category, loc: Location) -> list[Offer]:
         headers = self.location_headers(loc)
-        response = self.client.get(self.category_url(category), headers=headers)
+        response = self.client.get(self.category_url(cat_id), headers=headers)
         response.raise_for_status()
         state = extract_state(response.text)
 
@@ -229,7 +316,7 @@ class BlinkitAdapter(BaseAdapter):
                     headers={
                         **headers,
                         "content-type": "application/json",
-                        "Referer": self.category_url(category),
+                        "Referer": self.category_url(cat_id),
                     },
                     json={},
                 )

@@ -220,7 +220,11 @@ INSERT OR IGNORE INTO retailers (id, name, mode, deeplink_tpl) VALUES
 INSERT OR IGNORE INTO prefs (key, value) VALUES
   ('threshold_pct',   '0.6'),
   ('quiet_hours',     '{"start":"23:00","end":"08:00","tz":"Asia/Kolkata"}'),
-  ('location',        '{"lat":null,"lon":null,"pincode":null}'),
+  -- Hyderabad 500016 (Begumpet). A real default matters: BigBasket's listing
+  -- API 400s outright without a delivery location, and Blinkit falls back to
+  -- an IP-derived dark store, so a null location means a fresh deploy sweeps
+  -- nothing until onboarding runs. Overwritten by the app's Phase 5 step.
+  ('location',        '{"lat":17.4435,"lon":78.4645,"pincode":"500016"}'),
   ('fees.blinkit',    '{"delivery":25,"handling":0,"eta_minutes":15}'),
   ('fees.bigbasket',  '{"delivery":40,"handling":0,"eta_minutes":120}'),
   ('fees.myntra',     '{"delivery":0,"handling":0,"eta_minutes":null}'),

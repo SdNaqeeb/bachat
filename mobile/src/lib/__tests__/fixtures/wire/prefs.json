@@ -7,9 +7,9 @@
       "tz": "Asia/Kolkata"
     },
     "location": {
-      "lat": null,
-      "lon": null,
-      "pincode": null
+      "lat": 17.4435,
+      "lon": 78.4645,
+      "pincode": "500016"
     },
     "fees.blinkit": {
       "delivery": 20,

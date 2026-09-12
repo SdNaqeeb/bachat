@@ -373,8 +373,37 @@ class BigBasketAdapter(BaseAdapter):
         response.raise_for_status()
         return response.text
 
+    #: Generic catalog slug -> BigBasket ``/cl/<slug>/`` top-level slugs.
+    #: BigBasket's departments are coarser than the catalog's, so several
+    #: slugs share one ("dairy" and "bakery" are both bakery-cakes-dairy);
+    #: the dedupe in _sweep makes that harmless.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {
+        "bakery": ("bakery-cakes-dairy",),
+        "beverages": ("beverages",),
+        "dairy": ("bakery-cakes-dairy",),
+        "fruits-vegetables": ("fruits-vegetables",),
+        "household": ("cleaning-household",),
+        "personal-care": ("beauty-hygiene",),
+        "snacks": ("snacks-branded-foods",),
+        "staples": ("foodgrains-oil-masala",),
+    }
+
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
+        """Sweep every BigBasket department mapping to this catalog slug."""
         self.ensure_location(loc)
+        found: dict[str, Offer] = {}
+        for cat_id in self.category_ids(category):
+            try:
+                for offer in self._sweep_one(cat_id, category):
+                    found.setdefault(offer.ext_id, offer)
+            except Exception:  # noqa: BLE001 - one department must not cost the others
+                self.log.warning(
+                    "bigbasket: category %s failed, keeping %d offers so far",
+                    cat_id, len(found), exc_info=True,
+                )
+        return list(found.values())
+
+    def _sweep_one(self, cat_id: str, category: Category) -> list[Offer]:
         found: dict[str, Offer] = {}
         total_pages = self.pages
 
@@ -383,9 +412,9 @@ class BigBasketAdapter(BaseAdapter):
                 break
             try:
                 if self.use_api:
-                    payload: Any = self._listing("pc", category.id, page)
+                    payload: Any = self._listing("pc", cat_id, page)
                 else:
-                    payload = extract_next_data(self._category_html(category.id, page))
+                    payload = extract_next_data(self._category_html(cat_id, page))
             except Exception:  # noqa: BLE001
                 # A later page failing must not throw away the earlier ones:
                 # BigBasket starts 429-ing part-way through a deep sweep, and

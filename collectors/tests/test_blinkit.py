@@ -9,6 +9,8 @@ rather than a promise.
 
 from __future__ import annotations
 
+import re
+
 import json
 from pathlib import Path
 
@@ -236,7 +238,19 @@ def test_location_headers_are_empty_without_coordinates() -> None:
 
 def test_category_url_is_built_from_the_retailer_id() -> None:
     adapter = BlinkitAdapter()
-    assert adapter.category_url(MUNCHIES) == f"{BASE}/cn/munchies/cid/1237/940"
+    assert adapter.category_url(MUNCHIES.id) == f"{BASE}/cn/munchies/cid/1237/940"
+
+
+def test_category_ids_resolve_the_catalog_slug_to_blinkit_leaves() -> None:
+    """The catalog's generic slug is never a Blinkit URL by itself."""
+    ids = BlinkitAdapter().category_ids(MUNCHIES)
+    assert "chips-crisps/cid/1237/940" in ids
+    assert all(re.fullmatch(r"[a-z0-9\-]+/cid/\d+/\d+", i) for i in ids)
+
+
+def test_unmapped_category_yields_no_ids_rather_than_a_bad_url() -> None:
+    unknown = Category(id="nope", slug="nope", label="Nope", mode="quick")
+    assert BlinkitAdapter().category_ids(unknown) == ()
 
 
 # -- search -----------------------------------------------------------------

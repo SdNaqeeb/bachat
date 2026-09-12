@@ -34,6 +34,16 @@ class BaseAdapter:
     id: str = "base"
     mode: Mode = "quick"
 
+    #: Generic catalog slug -> this retailer's own category ids.
+    #:
+    #: The catalog served by ``GET /api/categories`` is deliberately
+    #: retailer-independent ("snacks", "staples"), because that slug is the
+    #: key products are stored under in D1. Each retailer shards the same
+    #: goods differently, so the translation has to live per retailer --
+    #: and one generic slug is usually several of the retailer's own
+    #: categories, hence a tuple.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {}
+
     def __init__(self, client: HttpClient | None = None) -> None:
         self.client = client or HttpClient()
         self.log = logging.getLogger(f"collectors.{self.id}")
@@ -52,6 +62,25 @@ class BaseAdapter:
         except Exception:  # noqa: BLE001
             self.log.exception("search failed for %s/%r", self.id, q)
             return []
+
+    # -- category translation --------------------------------------------
+    def category_ids(self, category: Category) -> tuple[str, ...]:
+        """This retailer's own ids for a generic catalog slug.
+
+        An unmapped slug returns ``()`` and logs. Returning empty is the
+        honest answer: sweeping the retailer's *generic* slug instead would
+        404 (Blinkit) or quietly return an unrelated listing (BigBasket),
+        which is how a missing mapping used to look like a working sweep
+        that simply found nothing.
+        """
+        ids = self.CATEGORY_IDS.get(category.slug)
+        if not ids:
+            self.log.warning(
+                "%s: no category mapping for %r; skipping it for this retailer",
+                self.id, category.slug,
+            )
+            return ()
+        return ids
 
     # -- subclass hooks --------------------------------------------------
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
