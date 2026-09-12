@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "bachat"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "03369ed0-de5e-40d3-bcf2-3219edbb30f7"
 
 # Secrets (set with `wrangler secret put`, never committed):
 #   INGEST_KEY  - shared secret required on X-Ingest-Key for POST /api/ingest

@@ -63,7 +63,6 @@ fraction of that.
    ```bash
    curl https://bachat.<your-subdomain>.workers.dev/api/health
    ```
-
    You should get JSON. It will report everything as stale, with no products —
    correct, since nothing has been collected yet.
 

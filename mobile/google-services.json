@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "892637798176",
+    "project_id": "android-8c853",
+    "storage_bucket": "android-8c853.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892637798176:android:e9215ebf0572d81461c145",
+        "android_client_info": {
+          "package_name": "ai.smartlearners.bachat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsD6Lzvruy2ON3FA6unKXIoNzfdO4yQHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
