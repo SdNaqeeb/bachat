@@ -200,6 +200,35 @@ def log(event: str, level: int = logging.INFO, **fields: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
+class ConfigError(RuntimeError):
+    """A required environment variable is missing or malformed."""
+
+
+def require_worker_base_url() -> str:
+    """Read and validate WORKER_BASE_URL.
+
+    GitHub Actions substitutes an *empty string* for a secret that does not
+    exist, so ``os.environ["WORKER_BASE_URL"]`` succeeds and the bad value
+    only surfaces much later as a ``requests.MissingSchema`` on the first
+    call. Fail here, where the message can name the secret.
+    """
+    raw = os.environ.get("WORKER_BASE_URL", "").strip()
+    if not raw:
+        raise ConfigError(
+            "WORKER_BASE_URL is empty or unset. In CI it comes from the repo "
+            "secret of the same name (Settings -> Secrets and variables -> "
+            "Actions); a secret that does not exist arrives as an empty "
+            "string rather than an error, so check the spelling of the "
+            "secret, not just its presence."
+        )
+    if not raw.startswith(("http://", "https://")):
+        raise ConfigError(
+            f"WORKER_BASE_URL must include a scheme; got {raw!r}. "
+            f"Did you mean https://{raw}?"
+        )
+    return raw
+
+
 class WorkerClient:
     def __init__(self, base_url: str, ingest_key: str, session: Any = None, timeout: float = 15.0):
         self.base_url = base_url.rstrip("/")
@@ -625,7 +654,7 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
     now = now or datetime.now(timezone.utc)
     captured_at_ms = int(now.timestamp() * 1000)
 
-    worker = WorkerClient(base_url=os.environ["WORKER_BASE_URL"], ingest_key=os.environ.get("INGEST_KEY", ""))
+    worker = WorkerClient(base_url=require_worker_base_url(), ingest_key=os.environ.get("INGEST_KEY", ""))
     raw_prefs = worker.get_prefs()
     prefs = build_user_prefs(raw_prefs, mode)
     location = build_location(raw_prefs)
@@ -790,6 +819,11 @@ def main(argv: list[str] | None = None) -> int:
     started = time.monotonic()
     try:
         results = run(args.mode, dry_run=args.dry_run)
+    except ConfigError as exc:
+        # Misconfiguration, not a sweep failure: no traceback, just the fix.
+        log("sweep_misconfigured", level=logging.ERROR, error=str(exc))
+        print(f"\nBachat sweep not started: {exc}\n", file=sys.stderr)
+        return 2
     except Exception:
         logger.exception("sweep_fatal_error")
         return 1
