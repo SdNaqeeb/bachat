@@ -167,6 +167,13 @@ HISTORY_BULK_CHUNK = 200
 # an SSL write error and lost the entire queue.
 PENDING_ALERTS_CHUNK = 100
 
+# Notifications delivered per sweep. The rest are held and reconsidered next
+# time, ranked again -- deferred, never discarded. One sweep produced 5,453
+# alerts; a phone cannot usefully receive that, and the Deals screen already
+# shows the full ranked feed without any of them, since GET /api/deals applies
+# no threshold and reads `products` directly.
+MAX_ALERTS_PER_SWEEP = 10
+
 
 # ---------------------------------------------------------------------------
 # Structured logging
@@ -665,6 +672,39 @@ def resolve_device_token(worker: WorkerClient) -> tuple[str | None, str]:
     return None, "none"
 
 
+def select_alerts_to_send(
+    ready: list[Alert], limit: int
+) -> tuple[list[Alert], list[Alert]]:
+    """Split ready alerts into the ones to push now and the ones to hold back.
+
+    One sweep produced 5,453 alerts. Pushing those is not a deal feed, it is a
+    denial of service against the user's phone, and a notification stream
+    nobody can read is worth less than none.
+
+    This caps *delivery only*. Nothing is discarded: the deferred alerts go
+    back into the held queue and the next sweep ranks them again alongside
+    whatever is new, so delivery is spread out rather than thrown away. The
+    Deals screen is unaffected either way -- it reads `products`, which
+    `worker.ingest()` writes regardless of any of this, and GET /api/deals
+    applies no threshold at all.
+
+    Ranking is by discount depth so that when only a few get through, they are
+    the deepest few rather than whichever the engine evaluated first. An alert
+    with no MRP has no computable depth and sorts last; guessing one would let
+    an unknown outrank a measured 60% off.
+    """
+    if limit <= 0:
+        return [], list(ready)
+
+    def depth(alert: Alert) -> tuple[float, int]:
+        if not alert.mrp or alert.mrp <= 0:
+            return (0.0, alert.lowest_in_days)
+        return ((alert.mrp - alert.price) / alert.mrp, alert.lowest_in_days)
+
+    ranked = sorted(ready, key=depth, reverse=True)
+    return ranked[:limit], ranked[limit:]
+
+
 def deliver_alerts(
     ready: list[Alert],
     sender: FCMSender | None,
@@ -819,7 +859,21 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
     ready = [a for a in combined if a.scheduled_for <= now]
     still_held = [a for a in combined if a.scheduled_for > now]
 
-    sent_count, sent_records = deliver_alerts(ready, sender, device_token, now, dry_run)
+    # Cap what actually reaches the phone. `deferred` keeps its original
+    # scheduled_for (already past), so it re-enters the queue below and the
+    # next sweep ranks it again against whatever is new.
+    to_send, deferred = select_alerts_to_send(ready, MAX_ALERTS_PER_SWEEP)
+    if deferred:
+        log(
+            "alerts_deferred_by_cap",
+            ready=len(ready),
+            sending=len(to_send),
+            deferred=len(deferred),
+            cap=MAX_ALERTS_PER_SWEEP,
+            detail="held for a later sweep; products are in D1 and visible in Deals regardless",
+        )
+
+    sent_count, sent_records = deliver_alerts(to_send, sender, device_token, now, dry_run)
 
     if dry_run:
         log("alert_state_not_persisted", detail="dry run: nothing recorded, nothing dequeued")
@@ -832,7 +886,7 @@ def run(mode: str, dry_run: bool = False, now: datetime | None = None) -> list[R
         except Exception as exc:  # noqa: BLE001 - never abort the run over bookkeeping
             log("alerts_record_failed", level=logging.ERROR, error=str(exc))
         try:
-            worker.replace_pending_alerts([pending_entry(a) for a in still_held])
+            worker.replace_pending_alerts([pending_entry(a) for a in still_held + deferred])
         except Exception as exc:  # noqa: BLE001 - the queue is durable; the next sweep retries
             log("pending_alerts_save_failed", level=logging.ERROR, error=str(exc))
 
