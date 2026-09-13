@@ -25,18 +25,24 @@ jobs:
     # that costs one sweep, which is the trade for collecting anything at all.
     runs-on: self-hosted
     # Budgeted at ~8 min/run (spec section 12); Flipkart's slow pacing
-    # (spec section 3) is the main driver of this job's runtime.
+    # (spec section 3) is the main driver of this job's runtime. Self-hosted
+    # runs cost no Actions minutes, but a wedged job holds the runner.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
+      # No actions/setup-python here, deliberately. This job runs on a
+      # self-hosted runner whose toolchain we own, and setup-python downloads
+      # an interpreter and then executes an unsigned setup.ps1, which a
+      # sensible PowerShell execution policy (RemoteSigned) refuses. Using the
+      # machine's own Python avoids the download entirely and -- the part that
+      # matters -- runs the sweep on the exact interpreter the adapters were
+      # verified against.
+      - name: Check Python
+        run: python --version
 
       - name: Install dependencies
-        run: pip install -r collectors/requirements.txt
+        run: python -m pip install -r collectors/requirements.txt
 
       - name: Run fashion sweep
         env:

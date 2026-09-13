@@ -161,8 +161,15 @@ D1, and send notifications. This is what runs while your phone is asleep.
    ./run.cmd
    ```
 
-   Run it as a service (`./svc.sh install` on Linux/macOS, or tick the service
-   option during `config.cmd` on Windows) so it survives a reboot.
+   Run it as a service (`./svc.sh install` on Linux/macOS, or pass
+   `--runasservice` to `config.cmd` from an **admin** shell on Windows) so it
+   survives a reboot.
+
+   **The machine needs Python 3.11+ on `PATH`.** The sweep workflows do not use
+   `actions/setup-python`: it downloads an interpreter and then runs an
+   unsigned `setup.ps1`, which a `RemoteSigned` PowerShell execution policy
+   refuses. On a runner you own, using the machine's own Python is both faster
+   and closer to what you tested against. Check with `python --version`.
 
    The trade: a sweep whose scheduled minute lands while the machine is asleep
    is skipped. That costs one sweep. A hosted runner cost you all of them.
