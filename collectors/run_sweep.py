@@ -438,6 +438,23 @@ def categories_for_mode(
         if known_mode == mode:
             selected.append(slug)
 
+    if not selected:
+        # Hard stop, not an empty list. With no categories the per-category
+        # loop in sweep_retailer() never runs, so every retailer reports
+        # products_collected=0 with no error, `if offers:` skips the ingest
+        # call entirely, and main() exits 0. The run goes green having
+        # written nothing -- which is how `prefs.enabled_categories` being
+        # emptied kept the Deals screen blank through days of "successful"
+        # sweeps. Collecting nothing is a misconfiguration, so it is raised
+        # as one and the Actions run fails visibly.
+        raise ConfigError(
+            f"no sweepable categories for mode {mode!r}: "
+            f"prefs.enabled_categories={sorted(enabled_categories)} matches none of the "
+            f"{sum(1 for m in mode_by_slug.values() if m == mode)} {mode!r} categories in "
+            "the /api/categories catalog. Enable at least one in the app's Settings "
+            "screen, or POST /api/prefs {\"enabled_categories\": [...]}."
+        )
+
     if Category is None:
         return selected
     return [
@@ -832,6 +849,33 @@ def print_summary(
     )
 
 
+def sweep_outcome_exit_code(results: list[RetailerRunResult]) -> int:
+    """The run's exit code, given what every retailer actually collected.
+
+    Spec section 6 says one retailer failing must never abort the run, and
+    that stays true: a partial sweep (some retailers ok, one blocked) is a
+    successful CI run.
+
+    What it does NOT mean is that a sweep which collected *nothing at all*
+    is a success. Every layer below here fails soft -- BaseAdapter.sweep()
+    swallows the exception and returns `[]`, sweep_retailer() records no
+    error for a category loop that never ran, run() skips the ingest call
+    on an empty offer list -- so a run that wrote zero rows to D1 looked
+    exactly like a healthy one and exited 0. That is how the collector
+    reported success 6x/day while the Deals screen stayed empty.
+
+    So the rule is about the outcome, not the errors: if not one retailer
+    came back with a single product, the sweep failed.
+    """
+    if not results:
+        return 1
+    if all(r.error for r in results):
+        return 1
+    if not any(r.products_collected > 0 for r in results):
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run a Bachat collector sweep")
     parser.add_argument("--mode", choices=["quick", "fashion"], required=True)
@@ -851,12 +895,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.exception("sweep_fatal_error")
         return 1
     log("sweep_done", mode=args.mode, seconds=round(time.monotonic() - started, 1))
-    # Exit non-zero only if EVERY retailer failed outright -- a partial
-    # run (some retailers ok, one blocked) is a successful CI run by
-    # design (spec section 6: one retailer failing must never abort it).
-    if results and all(r.error for r in results):
-        return 1
-    return 0
+    return sweep_outcome_exit_code(results)
 
 
 if __name__ == "__main__":
