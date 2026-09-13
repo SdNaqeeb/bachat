@@ -1,0 +1,58 @@
+name: Probe quick-commerce access
+
+# Diagnostic, not a sweep. Answers one question: can a GitHub Actions runner
+# reach Blinkit and BigBasket at all?
+#
+# Every adapter measurement in collectors/adapters/FASHION-NOTES.md was taken
+# from a residential IP in India. The runners are US/Azure datacenter IPs.
+# The quick sweep has never once called /api/ingest (health: last_sweep_at is
+# null for both quick retailers) while the same adapters return ~1,700 offers
+# from a machine in India -- so the environment is the only variable left.
+#
+# Run this from the Actions tab, then read the status codes. Delete the file
+# once the answer is recorded; it exists to settle one question.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Where is this runner
+        run: curl -s -m 20 https://ipinfo.io/json || echo "ipinfo unreachable"
+
+      - name: Blinkit category page
+        run: |
+          curl -s -m 30 -o /tmp/blinkit.html -w "blinkit HTTP %{http_code}, %{size_download} bytes\n" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
+            -H "lat: 17.4435" -H "lon: 78.4645" \
+            "https://blinkit.com/cn/milk/cid/14/922" || true
+          grep -c "__NEXT_DATA__" /tmp/blinkit.html || echo "blinkit: no __NEXT_DATA__ in body"
+
+      - name: BigBasket listing API
+        run: |
+          curl -s -m 30 -o /tmp/bb.json -w "bigbasket HTTP %{http_code}, %{size_download} bytes\n" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
+            -H "X-Caller: UIKIRK" -H "X-Channel: BB-WEB" \
+            "https://www.bigbasket.com/listing-svc/v2/products?type=pc&slug=bakery-cakes-dairy&page=1" || true
+          head -c 300 /tmp/bb.json; echo
+
+      - name: Real adapters, real counts
+        run: |
+          pip install -r collectors/requirements.txt
+          python - <<'PY'
+          import logging; logging.basicConfig(level=logging.INFO)
+          from collectors.adapters import ADAPTERS
+          from collectors.core.types import Category, Location
+          loc = Location(lat=17.4435, lon=78.4645, pincode="500016")
+          for rid in ("blinkit", "bigbasket"):
+              ad = ADAPTERS[rid]()
+              cat = Category(id="dairy", slug="dairy", label="Dairy", mode="quick")
+              try:
+                  print(f"RESULT {rid}: {len(ad._sweep(cat, loc))} offers")
+              except Exception as e:
+                  print(f"RESULT {rid}: RAISED {type(e).__name__}: {e}")
+          PY
