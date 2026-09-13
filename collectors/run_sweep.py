@@ -160,6 +160,13 @@ DEDUPE_WINDOW_DAYS = 90
 # thing this endpoint exists to remove.
 HISTORY_BULK_CHUNK = 200
 
+# Held alerts per POST /api/alerts/pending. Lower than the history chunk
+# because each entry carries a full serialised alert payload rather than a bare
+# id, and because the worker turns every one into its own D1 statement inside a
+# single batch. One unchunked request holding 5,453 alerts died mid-upload with
+# an SSL write error and lost the entire queue.
+PENDING_ALERTS_CHUNK = 100
+
 
 # ---------------------------------------------------------------------------
 # Structured logging
@@ -333,13 +340,40 @@ class WorkerClient:
         return resp.json().get("pending", [])
 
     def replace_pending_alerts(self, entries: list[dict[str, Any]]) -> None:
-        resp = self._session.post(
-            f"{self.base_url}/api/alerts/pending",
-            json={"action": "replace", "alerts": entries},
-            headers={"X-Ingest-Key": self.ingest_key},
-            timeout=self.timeout,
-        )
-        resp.raise_for_status()
+        """Write the held-alert queue, ``PENDING_ALERTS_CHUNK`` rows per request.
+
+        A single request is what this used to be, and a real sweep holding
+        5,453 alerts died mid-upload with an SSL write error, losing the whole
+        queue. Each entry carries a serialised payload, so the body grew to
+        megabytes and the worker turned it into 5,454 D1 statements in one
+        batch.
+
+        The first chunk goes as ``replace`` because that is what clears the
+        table; every later chunk is an ``append``, whose INSERT is
+        ``ON CONFLICT DO UPDATE`` and therefore safe to repeat. Only the first
+        request may clear -- a second ``replace`` part way through would delete
+        the chunks already written.
+
+        An empty list still sends one ``replace``. That request is what empties
+        the queue when every held alert has been delivered, so skipping it as
+        an optimisation would re-fire everything on the next sweep.
+        """
+        url = f"{self.base_url}/api/alerts/pending"
+        headers = {"X-Ingest-Key": self.ingest_key}
+
+        for i in range(0, max(len(entries), 1), PENDING_ALERTS_CHUNK):
+            resp = self._session.post(
+                url,
+                json={
+                    "action": "replace" if i == 0 else "append",
+                    "alerts": entries[i : i + PENDING_ALERTS_CHUNK],
+                },
+                headers=headers,
+                timeout=self.timeout,
+            )
+            # Raise rather than continue: a truncated queue must not be
+            # reported to the caller as a completed write.
+            resp.raise_for_status()
 
 
 def product_id_for(retailer_id: str, ext_id: str) -> str:
