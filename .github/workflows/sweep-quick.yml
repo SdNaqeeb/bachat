@@ -3,9 +3,13 @@ name: Quick-commerce sweep
 # Every 4 hours, offset off the hour -- GitHub delays and sometimes drops
 # on-the-hour scheduled jobs under load (spec section 12). :17 keeps this
 # and sweep-fashion.yml from landing in the same GitHub Actions minute.
+# Manual only. The cadence lives in Windows Task Scheduler on the collector
+# machine ("Bachat quick sweep", every 4 hours) because these jobs need
+# `runs-on: self-hosted`, and a scheduled run with no runner registered queues
+# indefinitely rather than failing -- which looks like nothing happening at
+# all. Kept dispatchable so the workflow still works the moment a runner is
+# online. See SETUP.md Phase 3.
 on:
-  schedule:
-    - cron: "17 */4 * * *"
   workflow_dispatch: {}
 
 concurrency:

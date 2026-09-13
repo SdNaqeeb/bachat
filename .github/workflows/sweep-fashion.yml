@@ -2,9 +2,9 @@ name: Fashion sweep
 
 # 2x/day, offset off the hour (spec section 12). :43 keeps this clear of
 # sweep-quick.yml's :17 schedule.
+# Manual only -- same reason as sweep-quick.yml. The cadence lives in the
+# "Bachat fashion sweep" scheduled task (05:43 and 17:43 daily).
 on:
-  schedule:
-    - cron: "43 5,17 * * *"
   workflow_dispatch: {}
 
 concurrency:

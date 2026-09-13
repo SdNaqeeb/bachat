@@ -302,3 +302,42 @@ parser that needs updating. The break is contained to one file.
 
 Adding a retailer later is one new file implementing the same adapter
 interface — see `collectors/adapters/base.py`.
+
+## Phase 6 — Where the sweeps actually run
+
+The sweep workflows are **manual-only** (`workflow_dispatch`). The schedule
+lives on the collector machine instead, in Windows Task Scheduler:
+
+| Task | Cadence |
+| --- | --- |
+| `Bachat quick sweep` | every 4 hours, from 00:17 |
+| `Bachat fashion sweep` | 05:43 and 17:43 daily |
+
+Both run `%USERPROFILE%\.bachat\run-sweep.ps1` as the logged-in user, with
+`-StartWhenAvailable` so a run missed while the machine was off fires when it
+comes back. Logs: `%USERPROFILE%\.bachat\logs\sweep-<mode>-<date>.log`, kept
+14 days.
+
+**Why not GitHub's schedule.** These jobs need `runs-on: self-hosted`, because
+four of the five retailers refuse GitHub's hosted runners (section 9 of
+`collectors/adapters/FASHION-NOTES.md` has the measurements). A scheduled run
+with no runner registered does not fail — it queues indefinitely, which looks
+exactly like nothing happening. Manual dispatch keeps the workflows usable the
+moment a runner is online, without that failure mode.
+
+**Why not a self-hosted runner as a service.** It can be, but on a machine
+signed in with a Microsoft account the service needs
+`MicrosoftAccount\<email>` plus the account password and the "Log on as a
+service" right, and running it as `NETWORK SERVICE` instead cannot work: that
+account has no ACL entry on a per-user Python install, so `python` is neither
+on its `PATH` nor readable. The scheduled task sidesteps all of it.
+
+**Credentials** live in `%USERPROFILE%\.bachat\`, deliberately outside the
+repository. `WORKER_BASE_URL` and `INGEST_KEY` are set by `run-sweep.ps1`.
+Nothing under the repo should ever hold the ingest key.
+
+To run a sweep by hand:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.bachat\run-sweep.ps1" -Mode quick
+```
