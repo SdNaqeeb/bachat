@@ -595,6 +595,23 @@ class MyntraAdapter(BaseAdapter):
     id: str = ADAPTER_ID
     mode: Mode = MODE
 
+    #: Catalog slug -> Myntra listing paths. Men's only, by product decision.
+    #:
+    #: On Myntra the slug *is* the path, so these are the real URLs and a wrong
+    #: one is a 404 rather than a bad guess. Every path below was verified live
+    #: on 2026-09-13 and returned 50 men's products.
+    #:
+    #: The catalog slugs stay gender-neutral (`fashion-tops`, not
+    #: `fashion-mens-tops`) so `prefs.enabled_categories`, the app's category
+    #: picker and every stored product row keep working untouched. The gender
+    #: lives here, in the translation, which is exactly what this table is for.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {
+        "fashion-tops": ("men-tshirts", "men-casual-shirts"),
+        "fashion-bottoms": ("men-jeans", "men-trousers"),
+        "fashion-footwear": ("men-casual-shoes", "men-sports-shoes"),
+        "fashion-accessories": ("men-watches", "men-wallets"),
+    }
+
     def __init__(self, client: HttpClient | None = None, fetch: Fetcher | None = None) -> None:
         super().__init__(client)
         self._fetch: Fetcher = fetch or (lambda url: self.client.get(url))
@@ -638,14 +655,29 @@ class MyntraAdapter(BaseAdapter):
     # -- BaseAdapter hooks ------------------------------------------------
 
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
-        """Collect the discount-sorted listing for ``category``.
+        """Collect the discount-sorted men's listings for ``category``.
+
+        One catalog slug is several Myntra listing paths (``fashion-tops`` is
+        both ``men-tshirts`` and ``men-casual-shirts``), so this fans out the
+        same way the grocery adapters do and de-duplicates by ``ext_id`` --
+        the paths genuinely overlap.
 
         ``loc`` is accepted for protocol conformance and ignored: Myntra prices
         are national, not dark-store specific.
         """
         del loc
-        url = build_listing_url(category_slug(category), sort="discount")
-        return self._collect(url, category_label(category))
+        found: dict[str, Offer] = {}
+        for path in self.sweep_terms(category):
+            try:
+                url = build_listing_url(path, sort="discount")
+                for offer in self._collect(url, self.stored_category(category)):
+                    found.setdefault(offer.ext_id, offer)
+            except Exception:  # noqa: BLE001 - one path must not cost the others
+                self.log.warning(
+                    "myntra: path %s failed, keeping %d offers so far",
+                    path, len(found), exc_info=True,
+                )
+        return list(found.values())
 
     def _search(self, q: str, f: Filters, loc: Location) -> list[Offer]:
         """Search ``q`` with ``f`` pushed into the URL as server-side facets.

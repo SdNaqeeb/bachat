@@ -82,6 +82,32 @@ class BaseAdapter:
             return ()
         return ids
 
+    def sweep_terms(self, category: Category | str) -> tuple[str, ...]:
+        """The retailer's own terms to sweep for ``category``.
+
+        A :class:`Category` is a catalog entry and goes through
+        :meth:`category_ids`, so an unmapped slug sweeps nothing rather than
+        being handed to the retailer as a literal search term -- that guess is
+        what had the fashion adapters searching for the string "fashion-tops".
+
+        A bare ``str`` is a direct call -- a test, or an ad-hoc sweep of one
+        known path -- and is used verbatim. The two callers want opposite
+        things from an unrecognised value, so the type is what distinguishes
+        them.
+        """
+        if isinstance(category, str):
+            return (category,)
+        return self.category_ids(category)
+
+    def stored_category(self, category: Category | str) -> str:
+        """The value recorded as ``products.category`` for this sweep.
+
+        Always the catalog slug, never the retailer's own term: D1 stores one
+        category per product and the app filters on the catalog slug, so a row
+        saved as "men-tshirts" would be invisible to a "fashion-tops" filter.
+        """
+        return category if isinstance(category, str) else category.slug
+
     # -- subclass hooks --------------------------------------------------
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
         raise NotImplementedError

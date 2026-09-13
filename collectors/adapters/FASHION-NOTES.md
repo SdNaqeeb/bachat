@@ -461,3 +461,43 @@ These are in files owned by other agents, recorded rather than edited:
 4. **`adapters/__init__.py` eagerly imports every retailer module**, so one
    missing sibling breaks the whole package for everyone. Consider lazy imports
    or a registry.
+
+## 8. Men's-only category mappings (2026-09-13)
+
+Fashion is men's-only by product decision. The catalog slugs stay
+gender-neutral (`fashion-tops`, not `fashion-mens-tops`) because
+`prefs.enabled_categories`, the app's category picker and every stored
+`products.category` value are keyed on them; the gender lives in each
+adapter's `CATEGORY_IDS` instead.
+
+**What was wrong before.** The fashion adapters never used `CATEGORY_IDS` at
+all — they built their URL from `category_label(category)`, which returns
+`Category.slug` first. So Amazon and Flipkart were searching for the literal
+string `"fashion-tops"` and Myntra was requesting `myntra.com/fashion-tops`,
+which is not a listing path. The women's apparel in the feed was not a leak:
+it was whatever those sites made of a nonsense query.
+
+Measured from a residential IP in India, sweeping each term directly:
+
+| Retailer | Term | Result |
+| --- | --- | --- |
+| Myntra | `men-tshirts`, `men-casual-shirts` | 50 each |
+| Myntra | `men-jeans`, `men-trousers` | 50 each |
+| Myntra | `men-casual-shoes`, `men-sports-shoes` | 50 each |
+| Myntra | `men-watches`, `men-wallets` | 50 each |
+| Amazon | `men's t-shirts`, `men's casual shirts` | 48 each |
+| Amazon | `men's jeans`, `men's trousers` | 48 each |
+| Amazon | `men's casual shoes` / `men's sports shoes` | 47 / 48 |
+| Amazon | `men's watches` / `men's wallets` | 48 / 47 |
+| Flipkart | all eight | **403 reCAPTCHA wall on every one** |
+
+Flipkart's terms are therefore **unverified**. They mirror the Amazon set, and
+the adapter correctly reported `blocked` rather than an empty result (§3.1), so
+this measures the wall and not the queries. Confirm them on the first clean
+Flipkart run and amend both this table and the note in `flipkart.py`.
+
+One catalog slug is now several retailer terms, so `_sweep` fans out and
+de-duplicates by `ext_id` — the shape `bigbasket.py` already used. The
+distinction between a mapped `Category` (must be mapped or it sweeps nothing)
+and a bare `str` (a literal term, used by direct/ad-hoc calls) lives in
+`BaseAdapter.sweep_terms`.

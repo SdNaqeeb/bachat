@@ -393,6 +393,24 @@ class AmazonAdapter(BaseAdapter):
     id: str = ADAPTER_ID
     mode: Mode = MODE
 
+    #: Catalog slug -> Amazon.in search queries. Men's only, by product decision.
+    #:
+    #: These are search terms, not ids: Amazon's /deals page is a React shell
+    #: with no server-rendered prices, so the sweep is a keyword search sorted
+    #: by discount (see `build_category_url`). Before this table existed the
+    #: query was `category_label(category)`, which returns `Category.slug`
+    #: first -- so the sweep was literally searching for "fashion-tops" and
+    #: taking whatever Amazon made of it, women's apparel included.
+    #:
+    #: All eight queries were verified live on 2026-09-13; each returned 47-48
+    #: men's products.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {
+        "fashion-tops": ("men's t-shirts", "men's casual shirts"),
+        "fashion-bottoms": ("men's jeans", "men's trousers"),
+        "fashion-footwear": ("men's casual shoes", "men's sports shoes"),
+        "fashion-accessories": ("men's watches", "men's wallets"),
+    }
+
     def __init__(self, client: HttpClient | None = None, fetch: Fetcher | None = None) -> None:
         super().__init__(client)
         self._fetch: Fetcher = fetch or (lambda url: self.client.get(url))
@@ -415,9 +433,23 @@ class AmazonAdapter(BaseAdapter):
         return body
 
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
-        """Discount/price-sorted sweep of one category. ``loc`` is irrelevant here."""
+        """Discount-sorted sweep of every men's query mapped to ``category``.
+
+        ``loc`` is irrelevant here -- Amazon.in prices are national.
+        """
         del loc
-        return self._collect(build_category_url(category), category_label(category), None)
+        found: dict[str, Offer] = {}
+        for query in self.sweep_terms(category):
+            try:
+                url = build_search_url(query, sort="discount-rank")
+                for offer in self._collect(url, self.stored_category(category), None):
+                    found.setdefault(offer.ext_id, offer)
+            except Exception:  # noqa: BLE001 - one query must not cost the others
+                self.log.warning(
+                    "amazon: query %r failed, keeping %d offers so far",
+                    query, len(found), exc_info=True,
+                )
+        return list(found.values())
 
     def _search(self, q: str, f: Filters, loc: Location) -> list[Offer]:
         del loc

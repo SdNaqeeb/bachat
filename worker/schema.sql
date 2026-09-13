@@ -188,10 +188,10 @@ INSERT OR IGNORE INTO categories (slug, label, mode) VALUES
   ('fruits-vegetables',   'Fruits & Veg',      'quick'),
   ('personal-care',       'Personal Care',     'quick'),
   ('household',           'Household',         'quick'),
-  ('fashion-tops',        'Tops',              'fashion'),
-  ('fashion-bottoms',     'Bottoms',           'fashion'),
-  ('fashion-footwear',    'Footwear',          'fashion'),
-  ('fashion-accessories', 'Accessories',       'fashion');
+  ('fashion-tops',        'Men''s Tops',       'fashion'),
+  ('fashion-bottoms',     'Men''s Bottoms',    'fashion'),
+  ('fashion-footwear',    'Men''s Footwear',   'fashion'),
+  ('fashion-accessories', 'Men''s Accessories','fashion');
 
 -- ---------------------------------------------------------------------------
 -- device registration for FCM push (implied by POST /api/register-device)

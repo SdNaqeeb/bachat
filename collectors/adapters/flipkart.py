@@ -360,6 +360,26 @@ class FlipkartAdapter(BaseAdapter):
     id: str = ADAPTER_ID
     mode: Mode = MODE
 
+    #: Catalog slug -> Flipkart search queries. Men's only, by product decision.
+    #:
+    #: Same shape and same reason as the Amazon table: `/offers-store` renders
+    #: no prices, so the sweep is a keyword search, and the query used to be
+    #: `category_label(category)` -- the literal slug "fashion-tops".
+    #:
+    #: **These terms are UNVERIFIED against the live site.** Every one of the
+    #: eight was attempted on 2026-09-13 and every one came back behind the
+    #: reCAPTCHA wall (403), which is the documented Flipkart behaviour (§3.1)
+    #: rather than anything about the queries. They mirror the Amazon set,
+    #: which *is* verified at 47-48 men's products per query. Whoever first
+    #: gets a clean Flipkart run should confirm them and amend this note --
+    #: do not assume they work because the Amazon equivalents do.
+    CATEGORY_IDS: dict[str, tuple[str, ...]] = {
+        "fashion-tops": ("men's t-shirts", "men's casual shirts"),
+        "fashion-bottoms": ("men's jeans", "men's trousers"),
+        "fashion-footwear": ("men's casual shoes", "men's sports shoes"),
+        "fashion-accessories": ("men's watches", "men's wallets"),
+    }
+
     def __init__(self, client: HttpClient | None = None, fetch: Fetcher | None = None) -> None:
         super().__init__(client)
         self._fetch: Fetcher = fetch or (lambda url: self.client.get(url))
@@ -382,9 +402,23 @@ class FlipkartAdapter(BaseAdapter):
         return body
 
     def _sweep(self, category: Category, loc: Location) -> list[Offer]:
-        """Discount/price-sorted sweep of one category. ``loc`` is irrelevant here."""
+        """Price-sorted sweep of every men's query mapped to ``category``.
+
+        ``loc`` is irrelevant here -- Flipkart prices are national.
+        """
         del loc
-        return self._collect(build_sweep_url(category), category_label(category), None)
+        found: dict[str, Offer] = {}
+        for query in self.sweep_terms(category):
+            try:
+                url = build_search_url(query, sort="price_asc")
+                for offer in self._collect(url, self.stored_category(category), None):
+                    found.setdefault(offer.ext_id, offer)
+            except Exception:  # noqa: BLE001 - one query must not cost the others
+                self.log.warning(
+                    "flipkart: query %r failed, keeping %d offers so far",
+                    query, len(found), exc_info=True,
+                )
+        return list(found.values())
 
     def _search(self, q: str, f: Filters, loc: Location) -> list[Offer]:
         del loc
