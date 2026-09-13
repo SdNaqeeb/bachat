@@ -13,7 +13,17 @@ concurrency:
 
 jobs:
   sweep:
-    runs-on: ubuntu-latest
+    # Self-hosted, deliberately. Four of the five retailers refuse GitHub's
+    # hosted runners: Blinkit answered 403 on every request and every retry
+    # from a US runner (2026-09-14), BigBasket and Myntra never ingested a
+    # row, while the identical code collects 1,700+ offers from a residential
+    # IP in India. Amazon is the only one that survives on a hosted runner.
+    # This is a network-location problem, not an adapter problem -- see
+    # collectors/adapters/FASHION-NOTES.md section 9.
+    #
+    # If the machine is asleep at the scheduled minute the run is skipped;
+    # that costs one sweep, which is the trade for collecting anything at all.
+    runs-on: self-hosted
     # Budgeted at ~8 min/run (spec section 12); Flipkart's slow pacing
     # (spec section 3) is the main driver of this job's runtime.
     timeout-minutes: 15

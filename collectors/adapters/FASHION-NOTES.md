@@ -501,3 +501,35 @@ de-duplicates by `ext_id` — the shape `bigbasket.py` already used. The
 distinction between a mapped `Category` (must be mapped or it sweeps nothing)
 and a bare `str` (a literal term, used by direct/ad-hoc calls) lives in
 `BaseAdapter.sweep_terms`.
+
+## 9. Where the collector can run (2026-09-14)
+
+The sweeps run on a **self-hosted** runner. This is not a preference; it is the
+only configuration in which four of the five retailers return anything.
+
+Measured the same day, same commit, same code:
+
+| Retailer | GitHub hosted runner (US) | Residential IP, India |
+| --- | --- | --- |
+| Blinkit | **403 on every request, all 4 retries, every category** | 1,393 offers |
+| BigBasket | never ingested a row | 311 offers |
+| Myntra | never ingested a row | 100 per slug |
+| Amazon | **works** — 150 products | 95-96 per slug |
+| Flipkart | never ingested a row | reCAPTCHA wall (§3.1) |
+
+Amazon is the exception because it is a global site and the warm-up sequence
+in §6 is enough for it. Blinkit, BigBasket and Myntra are India-only and
+refuse the runner outright.
+
+Two things this does **not** establish:
+
+1. Whether the refusal is geographic or ASN-based. A Mumbai VPS is still a
+   datacenter IP and may be refused identically. Nobody has tested one, so do
+   not assume a cheap India VPS fixes this -- measure before spending.
+2. Whether Flipkart would work from a residential IP. It walled every attempt
+   from here too, which is its documented behaviour (§3.1), so it remains
+   expected-to-fail wherever it runs.
+
+The cost of self-hosting is that a sweep whose scheduled minute lands while the
+machine is asleep is simply skipped. That is a real downside and it is the
+right trade: a skipped sweep collects nothing, and so did every hosted one.

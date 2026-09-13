@@ -142,10 +142,35 @@ D1, and send notifications. This is what runs while your phone is asleep.
    prices from Gurugram than from Bengaluru. A sweep run before you finish
    onboarding has no location to work with.
 
-3. Trigger a first run by hand rather than waiting for the schedule:
+3. **Register a self-hosted runner.** The sweeps are configured with
+   `runs-on: self-hosted` and will queue forever without one.
+
+   This is not optional and it is not a preference. Measured 2026-09-14 on a
+   GitHub-hosted US runner: Blinkit answered **403 to every request and every
+   retry**, and BigBasket and Myntra never ingested a row — while the same
+   commit collects 1,700+ offers from a residential connection in India. Only
+   Amazon works on a hosted runner. India-only retailers refuse them.
+
+   **Settings → Actions → Runners → New self-hosted runner**, pick your OS,
+   and follow the commands it shows you. On Windows that is roughly:
+
+   ```powershell
+   mkdir C:\actions-runner ; cd C:\actions-runner
+   # download + extract the package the page links, then:
+   ./config.cmd --url https://github.com/<you>/bachat --token <token from that page>
+   ./run.cmd
+   ```
+
+   Run it as a service (`./svc.sh install` on Linux/macOS, or tick the service
+   option during `config.cmd` on Windows) so it survives a reboot.
+
+   The trade: a sweep whose scheduled minute lands while the machine is asleep
+   is skipped. That costs one sweep. A hosted runner cost you all of them.
+
+4. Trigger a first run by hand rather than waiting for the schedule:
    **Actions → "Quick-commerce sweep" → Run workflow.**
 
-4. Watch the log. Expect a per-retailer summary at the end. Some retailers
+5. Watch the log. Expect a per-retailer summary at the end. Some retailers
    failing is normal and by design — one blocked retailer must never cost you
    the others' data. If *every* retailer fails, check `WORKER_BASE_URL` and
    `INGEST_KEY` first. A run that stops before any retailer summary and says
