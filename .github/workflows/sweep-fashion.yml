@@ -28,6 +28,18 @@ jobs:
     # (spec section 3) is the main driver of this job's runtime. Self-hosted
     # runs cost no Actions minutes, but a wedged job holds the runner.
     timeout-minutes: 15
+    # cmd, not PowerShell. Actions writes every `run:` block to a temp .ps1
+    # and dot-sources it, so each step is subject to the machine's PowerShell
+    # execution policy -- which refused them outright on this runner ("running
+    # scripts is disabled on this system"), even though CurrentUser is
+    # RemoteSigned and the scripts are locally generated. Rather than weaken a
+    # machine-wide security setting to satisfy a shell we do not need, the
+    # steps run through cmd, which has no execution-policy concept. Every
+    # command here is a single-line invocation with no shell-specific syntax,
+    # so nothing is given up. A non-Windows runner would need this removed.
+    defaults:
+      run:
+        shell: cmd
     steps:
       - uses: actions/checkout@v4
 
