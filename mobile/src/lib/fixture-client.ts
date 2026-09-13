@@ -43,6 +43,7 @@ import {
   type BasketItemInput,
   type BasketLine,
   type BasketQuote,
+  type Category,
   type CompareQuery,
   type CompareResult,
   type Deal,
@@ -523,6 +524,20 @@ export function createFixtureClient(): ApiClient {
         }),
         signal
       );
+    },
+
+    categories(mode, signal) {
+      // The real client reads GET /api/categories -- the catalog, which exists
+      // independently of anything swept. In demo mode the fixture catalog is
+      // that same source, filtered by mode when one is asked for.
+      return settle<Category[]>(
+        () => (mode ? categoriesFor(mode) : [...categoriesFor('quick'), ...categoriesFor('fashion')]),
+        signal
+      );
+    },
+
+    prefs(signal) {
+      return settle<Prefs>(() => ({ ...prefs }), signal);
     },
 
     savePrefs(partial, signal) {

@@ -31,6 +31,7 @@ import {
   saveLocalSettings,
   savePrefs as persistPrefs,
 } from '@/lib/storage';
+import { hydratePrefs, shouldPush } from '@/lib/prefs-sync';
 import {
   DEFAULT_LOCAL_SETTINGS,
   DEFAULT_PREFS,
@@ -74,6 +75,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const [syncError, setSyncError] = useState<string | null>(null);
 
   const hydrated = useRef(false);
+  /** What this session started with, so an unchanged state is never pushed. */
+  const hydratedPrefs = useRef<Prefs>(DEFAULT_PREFS);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,13 +84,22 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [storedPrefs, storedSettings] = await Promise.all([
+      const [storedPrefs, storedSettings, serverPrefs] = await Promise.all([
         loadPrefs(),
         loadLocalSettings(),
+        // Offline is normal here, not an error. `hydratePrefs` falls back to
+        // the local copy when this resolves null.
+        apiClient.prefs().catch(() => null),
       ]);
       if (cancelled) return;
-      setPrefs(storedPrefs);
+      const merged = hydratePrefs(storedPrefs, serverPrefs);
+      hydratedPrefs.current = merged;
+      setPrefs(merged);
       setSettings(storedSettings);
+      // Set only once the server's copy is known. This flag gates the sync
+      // effect below, and flipping it after the local read alone is what let a
+      // phone holding `enabledCategories: []` erase the server's list — which
+      // left the collector with nothing to sweep for a day.
       hydrated.current = true;
       setReady(true);
     })();
@@ -121,11 +133,17 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated.current) return;
+    // Nothing changed since hydration, so there is nothing to write. Without
+    // this, merely opening the app posts the server's own values back to it.
+    if (!shouldPush(hydratedPrefs.current, prefs)) return;
     if (syncTimer.current) clearTimeout(syncTimer.current);
     syncTimer.current = setTimeout(() => {
       apiClient
         .savePrefs(prefs)
-        .then(() => setSyncError(null))
+        .then(() => {
+          hydratedPrefs.current = prefs;
+          setSyncError(null);
+        })
         // Offline is a normal state for this app, not an error worth a dialog.
         .catch((error: unknown) =>
           setSyncError(error instanceof Error ? error.message : 'Settings not synced yet.')

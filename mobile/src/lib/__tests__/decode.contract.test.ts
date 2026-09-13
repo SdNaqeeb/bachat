@@ -265,8 +265,12 @@ describe('/api/prefs', () => {
     expect(prefs.threshold).toBe(0.6);
     // "23:00" on the wire, hour-of-day in the app.
     expect(prefs.quietHours).toEqual({ start: 23, end: 8 });
-    expect(prefs.pincode).toBe('');
-    expect(prefs.lat).toBeNull();
+    // The fixture carries a real location (Hyderabad 500016). It is decoded,
+    // not defaulted: a null lat/lon means Blinkit falls back to an IP-derived
+    // dark store and prices the wrong shop, so losing these silently matters.
+    expect(prefs.pincode).toBe('500016');
+    expect(prefs.lat).toBe(17.4435);
+    expect(prefs.lon).toBe(78.4645);
     expect(prefs.fees.blinkit).toEqual({ deliveryFee: 20, handlingFee: 5 });
     expect(prefs.enabledCategories).toContain('dairy');
     expect(prefs.notificationsEnabled).toBe(true);

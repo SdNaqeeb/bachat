@@ -663,6 +663,33 @@ export function decodeRetailer(value: unknown, path: string, fallbackMode: Mode)
   };
 }
 
+/**
+ * GET /api/categories -> the sweepable catalog.
+ *
+ * Deliberately not the same source as `decodeFacets().categories`. Facets are
+ * derived from rows already in `products`, so for a mode nothing has been
+ * swept for yet the list comes back empty — and a Settings picker fed from it
+ * cannot offer the categories needed to collect the products that would fill
+ * it. That deadlock is why this exists.
+ *
+ * Labels here are the Worker's own, from the `categories` table, so unlike the
+ * facets path nothing is derived from the slug. That matters: the table says
+ * "Men's Tops", and a slug-derived label would render "Fashion-tops".
+ */
+export function decodeCategories(body: unknown): Category[] {
+  const r = rec(body, WHAT_FACETS, 'categories');
+  return arr(r.categories, WHAT_FACETS, 'categories.categories').map((entry, i) => {
+    const p = `categories.categories[${i}]`;
+    const row = rec(entry, WHAT_FACETS, p);
+    const id = reqStr(row.slug, WHAT_FACETS, `${p}.slug`);
+    return {
+      id,
+      label: isAbsent(row.label) ? labelForCategory(id) : reqStr(row.label, WHAT_FACETS, `${p}.label`),
+      mode: reqMode(row.mode, WHAT_FACETS, `${p}.mode`),
+    };
+  });
+}
+
 export function decodeFacets(body: unknown, requestedMode: Mode): Facets {
   const r = rec(body, WHAT_FACETS, 'facets');
   const mode = isAbsent(r.mode) ? requestedMode : reqMode(r.mode, WHAT_FACETS, 'facets.mode');

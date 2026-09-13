@@ -35,7 +35,7 @@ import { useMode } from '@/hooks/use-mode';
 import { useNotifications } from '@/hooks/use-notifications';
 import { usePrefs } from '@/hooks/use-prefs';
 import { apiClient } from '@/lib/client';
-import type { Facets, HealthReport } from '@/lib/types';
+import type { Category, Facets, HealthReport } from '@/lib/types';
 import { layout, palette, spacing, type } from '@/theme';
 
 export default function SettingsScreen() {
@@ -45,6 +45,7 @@ export default function SettingsScreen() {
   const { permission, busy, error, enable, ensureChannels, lastReceivedAt } = useNotifications();
 
   const [facets, setFacets] = useState<Facets | null>(null);
+  const [catalog, setCatalog] = useState<Category[] | null>(null);
   const [health, setHealth] = useState<HealthReport | null>(null);
   const [batteryOpen, setBatteryOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
@@ -56,7 +57,27 @@ export default function SettingsScreen() {
       .facets(mode, controller.signal)
       .then(setFacets)
       .catch(() => {
-        // Losing facets costs the category and fee lists, not the whole screen.
+        // Losing facets costs the retailer/fee lists, not the whole screen.
+      });
+    return () => controller.abort();
+  }, [mode]);
+
+  // Categories come from the CATALOG, not from facets.
+  //
+  // `facets.categories` is derived from rows already in `products`, so for a
+  // mode nothing has been swept for it comes back empty — and this picker is
+  // how you enable the categories that would cause that sweep. Feeding it from
+  // facets deadlocks: quick commerce had no products, so the picker offered no
+  // quick categories, so none could be enabled, so the sweep collected
+  // nothing. /api/categories is the catalog and exists independently of what
+  // has been collected.
+  useEffect(() => {
+    const controller = new AbortController();
+    apiClient
+      .categories(mode, controller.signal)
+      .then(setCatalog)
+      .catch(() => {
+        // Falls back to the facets list below, which is better than nothing.
       });
     return () => controller.abort();
   }, [mode]);
@@ -79,7 +100,12 @@ export default function SettingsScreen() {
     void ensureChannels(facets.categories);
   }, [facets, ensureChannels]);
 
-  const categories = useMemo(() => facets?.categories ?? [], [facets]);
+  // Catalog first; the facets list is only a fallback for an unreachable
+  // /api/categories, and is filtered to this mode since facets already is.
+  const categories = useMemo(
+    () => catalog ?? facets?.categories ?? [],
+    [catalog, facets]
+  );
   const retailers = useMemo(() => facets?.retailers ?? [], [facets]);
 
   const followAll = useCallback(() => {

@@ -15,6 +15,7 @@ import { ApiError } from '@/lib/api-error';
 import {
   decodeBasket,
   decodeBasketItems,
+  decodeCategories,
   decodeCompare,
   decodeDeals,
   decodeFacets,
@@ -30,6 +31,7 @@ import {
   type BasketComparison,
   type BasketItem,
   type BasketItemInput,
+  type Category,
   type CompareQuery,
   type CompareResult,
   type DealsFeed,
@@ -85,6 +87,17 @@ export type ApiClient = {
   compare(query: CompareQuery, signal?: AbortSignal): Promise<CompareResult>;
   history(productId: string, signal?: AbortSignal): Promise<PriceHistory>;
   facets(mode: Mode, signal?: AbortSignal): Promise<Facets>;
+  /**
+   * The sweepable category catalog, independent of what has been collected.
+   *
+   * Distinct from `facets().categories`, which is derived from rows already in
+   * `products` and is therefore empty for a mode nothing has been swept for
+   * yet. Settings must use this one: a picker fed from facets cannot offer the
+   * categories needed to collect the products that would populate it.
+   */
+  categories(mode?: Mode, signal?: AbortSignal): Promise<Category[]>;
+  /** The Worker's stored prefs. The shared copy the collector actually reads. */
+  prefs(signal?: AbortSignal): Promise<Prefs>;
   /** Shallow-merges `partial` server-side and returns the full stored prefs. */
   savePrefs(partial: Partial<Prefs>, signal?: AbortSignal): Promise<Prefs>;
   /** Hands the FCM device token to the Worker so the collector can push. */
@@ -374,6 +387,26 @@ export function createClient(rawBaseUrl: string = BACKEND_BASE_URL): ApiClient {
         baseUrl
       );
       return decodeFacets(body, mode);
+    },
+
+    async categories(mode, signal) {
+      const { body } = await request(
+        {
+          url: `${baseUrl}/api/categories${mode ? buildQuery({ mode }) : ''}`,
+          timeout: TIMEOUTS.read,
+          signal,
+        },
+        baseUrl
+      );
+      return decodeCategories(body);
+    },
+
+    async prefs(signal) {
+      const { body } = await request(
+        { url: `${baseUrl}/api/prefs`, timeout: TIMEOUTS.read, signal },
+        baseUrl
+      );
+      return decodePrefs(body);
     },
 
     async savePrefs(partial, signal) {
