@@ -310,8 +310,21 @@ lives on the collector machine instead, in Windows Task Scheduler:
 
 | Task | Cadence |
 | --- | --- |
-| `Bachat quick sweep` | every 4 hours, from 00:17 |
-| `Bachat fashion sweep` | 05:43 and 17:43 daily |
+| `Bachat quick sweep` | once daily, 07:17 |
+| `Bachat fashion sweep` | once daily, 09:43 |
+
+**Once a day is a quota decision, not a preference.** `ingest.ts` writes three
+rows per offer (a `products` upsert, a `prices` insert and a `price_daily`
+upsert), and a quick sweep collects ~4,200 offers -- about 12,650 row writes
+per run. D1's free plan allows 100,000 row writes per day, so the original
+4-hourly schedule spent ~76,000 of them on the quick sweep alone, before the
+fashion sweep or anything the app reads. It exhausted the daily quota and
+every endpoint began returning 500. Once a day for each mode costs ~16,000
+writes, which leaves real headroom.
+
+If you want more frequent sweeps, the lever is not the schedule: it is that
+every sweep writes a `prices` row per product whether or not the price moved.
+Skipping unchanged prices would cut roughly two thirds of the writes.
 
 Both run `%USERPROFILE%\.bachat\run-sweep.ps1` as the logged-in user, with
 `-StartWhenAvailable` so a run missed while the machine was off fires when it
