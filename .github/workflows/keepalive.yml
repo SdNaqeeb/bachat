@@ -6,8 +6,6 @@ name: Keepalive
 # Sundays; the exact minute is offset off the hour for the same reason as
 # the sweep jobs.
 on:
-  schedule:
-    - cron: "9 3 * * 0"
   workflow_dispatch: {}
 
 permissions:

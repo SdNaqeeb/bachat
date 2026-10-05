@@ -6,8 +6,6 @@ name: Daily rollup and prune
 # window (spec section 5) -- price_daily is never pruned since the 30-day
 # low query and the honesty rule both read only that small table.
 on:
-  schedule:
-    - cron: "51 2 * * *"
   workflow_dispatch: {}
 
 concurrency:
